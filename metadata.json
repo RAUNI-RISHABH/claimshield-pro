@@ -1,0 +1,6 @@
+{
+  "name": "ClaimShield Pro",
+  "description": "Enterprise motor claims processing portal with multi-document upload, claim tracking, AI review assessment, and validator verification center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
