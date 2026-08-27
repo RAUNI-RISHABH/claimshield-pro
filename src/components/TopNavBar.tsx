@@ -17,17 +17,17 @@ export const TopNavBar: React.FC = () => {
       ? activeNav === 'upload'
         ? 'Multi-Document Upload'
         : activeNav === 'history'
-        ? 'Claim Status & Tracker'
-        : activeNav === 'notifications'
-        ? 'Alerts & Updates'
-        : 'Support Center'
+          ? 'Claim Status & Tracker'
+          : activeNav === 'notifications'
+            ? 'Alerts & Updates'
+            : 'Support Center'
       : activeNav === 'queue'
-      ? 'Claims Queue'
-      : activeNav === 'report'
-      ? 'Verification Center'
-      : activeNav === 'analytics'
-      ? 'Audit & Analytics'
-      : 'Unit Settings';
+        ? 'Claims Queue'
+        : activeNav === 'report'
+          ? 'Verification Center'
+          : activeNav === 'analytics'
+            ? 'Audit & Analytics'
+            : 'Unit Settings';
 
   return (
     <header className="flex justify-between items-center px-4 md:px-6 w-full fixed top-0 z-50 bg-white h-16 border-b border-[#e2e8f0] shadow-xs">
@@ -47,13 +47,13 @@ export const TopNavBar: React.FC = () => {
             <span className="material-symbols-outlined text-white text-[20px]">verified_user</span>
           </div>
           <span className="font-bold text-lg md:text-xl text-[#00355f] tracking-tight">
-            ClaimShield <span className="text-[#4a6173] font-medium">Pro</span>
+            ClaimIQ
           </span>
-          {activeViewTitle && (
+          {/* {activeViewTitle && (
             <span className="hidden sm:inline-block text-xs font-semibold text-[#00355f] bg-[#eef4ff] px-2.5 py-0.5 rounded-full border border-[#cde5fc]">
               {activeViewTitle}
             </span>
-          )}
+          )} */}
         </div>
       </div>
 

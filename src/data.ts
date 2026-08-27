@@ -238,10 +238,11 @@ export const INITIAL_UPLOAD_SLOTS = [
     subtitle: 'Required',
     required: true,
     icon: 'directions_car',
-    status: 'uploading',
+    categoryPayload: 'car pics',
+    status: 'error' as const,
     fileName: 'car_front_damage.jpg',
-    progress: 65,
-    borderTheme: 'error', // As shown in mockup 1 & 2
+    error: 'Car photo is too dark or VIN number not visible. Please re-upload a clear, well-lit photo showing damage and vehicle stamp.',
+    borderTheme: 'error' as const,
     hint: 'PDF, JPG, PNG up to 10MB'
   },
   {
@@ -250,8 +251,9 @@ export const INITIAL_UPLOAD_SLOTS = [
     subtitle: 'Required',
     required: true,
     icon: 'local_police',
-    status: 'empty',
-    borderTheme: 'warning', // yellow/amber dashed in screen 2
+    categoryPayload: 'police report',
+    status: 'empty' as const,
+    borderTheme: 'warning' as const,
     hint: 'PDF, JPG, PNG up to 10MB'
   },
   {
@@ -260,8 +262,9 @@ export const INITIAL_UPLOAD_SLOTS = [
     subtitle: 'Required',
     required: true,
     icon: 'id_card',
-    status: 'empty',
-    borderTheme: 'warning',
+    categoryPayload: 'driving license',
+    status: 'empty' as const,
+    borderTheme: 'warning' as const,
     hint: 'Click to upload or drag & drop'
   },
   {
@@ -270,8 +273,9 @@ export const INITIAL_UPLOAD_SLOTS = [
     subtitle: 'Required',
     required: true,
     icon: 'handyman',
-    status: 'empty',
-    borderTheme: 'warning',
+    categoryPayload: 'repair estimate',
+    status: 'empty' as const,
+    borderTheme: 'warning' as const,
     hint: 'Click to upload or drag & drop'
   },
   {
@@ -280,8 +284,9 @@ export const INITIAL_UPLOAD_SLOTS = [
     subtitle: 'Optional',
     required: false,
     icon: 'group',
-    status: 'empty',
-    borderTheme: 'success', // green in screen 2
+    categoryPayload: 'third party',
+    status: 'empty' as const,
+    borderTheme: 'success' as const,
     hint: 'Click to upload or drag & drop'
   },
   {
@@ -290,8 +295,9 @@ export const INITIAL_UPLOAD_SLOTS = [
     subtitle: 'Optional',
     required: false,
     icon: 'receipt_long',
-    status: 'empty',
-    borderTheme: 'success', // green in screen 2
+    categoryPayload: 'towing receipt',
+    status: 'empty' as const,
+    borderTheme: 'success' as const,
     hint: 'Click to upload or drag & drop'
   }
 ];

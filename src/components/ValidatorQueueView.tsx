@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useClaimStore } from '../store/useClaimStore';
 import { ClaimRecord } from '../types';
+import { fetchValidatorQueue } from '../api/validatorApi';
 
 export const ValidatorQueueView: React.FC = () => {
   const claims = useClaimStore((state) => state.claims);
@@ -13,9 +14,10 @@ export const ValidatorQueueView: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 600);
+    await fetchValidatorQueue({ statusFilter: filterType, searchQuery });
+    setIsRefreshing(false);
   };
 
   const handleSelectClaim = (claim: ClaimRecord) => {

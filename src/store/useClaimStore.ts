@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { UserRole, ClaimRecord, DocumentItem, UserProfile } from '../types';
 import { INITIAL_CLAIMS, INITIAL_UPLOAD_SLOTS, HOTLINKED_ASSETS } from '../data';
+import { uploadAndValidateDocument, submitClaimApi, saveDraftClaimApi } from '../api/claimerApi';
 
 export interface UploadSlot {
   id: string;
@@ -8,11 +9,15 @@ export interface UploadSlot {
   subtitle: string;
   required: boolean;
   icon: string;
-  status: 'empty' | 'uploading' | 'uploaded';
+  categoryPayload: string; // e.g. "car pics", "police report", "driving license", "repair estimate", "third party", "towing receipt"
+  status: 'empty' | 'uploading' | 'uploaded' | 'error';
   fileName?: string;
+  fileSize?: string;
   progress?: number;
   borderTheme: 'error' | 'warning' | 'success' | 'default';
   hint: string;
+  error?: string;
+  successMessage?: string;
 }
 
 export interface NotificationItem {
@@ -106,13 +111,14 @@ interface ClaimStoreState {
   updateClaimStatus: (claimId: string, newStatus: 'approved' | 'rejected' | 'pending') => void;
   approveClaim: (claimId: string, deductions: number, notes: string) => void;
   rejectClaim: (claimId: string, notes: string) => void;
+  runAiVerification: (claimId: string) => void;
 
   // File Upload actions
-  uploadFileToSlot: (slotId: string, fileName: string) => void;
+  uploadFileToSlot: (slotId: string, file: File) => Promise<void>;
   removeFileFromSlot: (slotId: string) => void;
   completeSlotUpload: (slotId: string) => void;
   saveDraftClaim: () => void;
-  submitClaim: (onComplete?: () => void) => void;
+  submitClaim: (onComplete?: () => void) => Promise<void>;
 
   // Notification actions
   markAllNotificationsRead: () => void;
@@ -134,7 +140,7 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
   selectedTrackingClaimId: '#CLM-2024-089',
 
   uploadSlots: INITIAL_UPLOAD_SLOTS as UploadSlot[],
-  showErrorToast: true,
+  showErrorToast: false,
   isSubmittingClaim: false,
   submitMessage: null,
 
@@ -306,21 +312,107 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
     }));
   },
 
-  uploadFileToSlot: (slotId, fileName) => {
+  runAiVerification: (claimId) => {
     set((state) => ({
-      uploadSlots: state.uploadSlots.map((slot) => {
-        if (slot.id === slotId) {
+      claims: state.claims.map((c) => {
+        if (c.id === claimId) {
           return {
-            ...slot,
-            status: 'uploaded',
-            fileName,
-            progress: 100,
-            borderTheme: 'success',
+            ...c,
+            aiSummary: {
+              ...c.aiSummary,
+              damageVerified: true,
+              policyActive: true,
+              fraudScore: Math.min(c.aiSummary.fraudScore, 7),
+              fraudLabel: `Low Risk (${Math.min(c.aiSummary.fraudScore, 7)}/100)`,
+              damageAssessment: c.aiSummary.damageAssessment.includes('(AI Verified)')
+                ? c.aiSummary.damageAssessment
+                : `${c.aiSummary.damageAssessment} (AI Verified)`,
+            },
+            documents: c.documents.map((d) => ({
+              ...d,
+              status: 'verified_agent',
+              error: undefined,
+            })),
           };
         }
-        return slot;
+        return c;
       }),
     }));
+  },
+
+  uploadFileToSlot: async (slotId, file) => {
+    const targetSlot = get().uploadSlots.find((s) => s.id === slotId);
+    if (!targetSlot) return;
+
+    // 1. Enter uploading state
+    set((state) => ({
+      uploadSlots: state.uploadSlots.map((slot) =>
+        slot.id === slotId
+          ? {
+              ...slot,
+              status: 'uploading' as const,
+              fileName: file.name,
+              fileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+              progress: 35,
+              error: undefined,
+              successMessage: undefined,
+              borderTheme: 'default' as const,
+            }
+          : slot
+      ),
+    }));
+
+    // Simulated progress tick
+    setTimeout(() => {
+      set((state) => ({
+        uploadSlots: state.uploadSlots.map((slot) =>
+          slot.id === slotId && slot.status === 'uploading'
+            ? { ...slot, progress: 80 }
+            : slot
+        ),
+      }));
+    }, 350);
+
+    // 2. Call Single Unified API with category property ('car pics', 'police report', etc.)
+    const response = await uploadAndValidateDocument({
+      claimId: '#CLM-9821',
+      category: targetSlot.categoryPayload || 'car pics',
+      file,
+      metadata: { slotId },
+    });
+
+    // 3. Process backend response within card
+    if (response.success) {
+      set((state) => ({
+        uploadSlots: state.uploadSlots.map((slot) =>
+          slot.id === slotId
+            ? {
+                ...slot,
+                status: 'uploaded' as const,
+                progress: 100,
+                borderTheme: 'success' as const,
+                successMessage: response.message,
+                error: undefined,
+              }
+            : slot
+        ),
+      }));
+    } else {
+      set((state) => ({
+        uploadSlots: state.uploadSlots.map((slot) =>
+          slot.id === slotId
+            ? {
+                ...slot,
+                status: 'error' as const,
+                progress: undefined,
+                borderTheme: 'error' as const,
+                error: response.error || response.message,
+                successMessage: undefined,
+              }
+            : slot
+        ),
+      }));
+    }
   },
 
   removeFileFromSlot: (slotId) => {
@@ -329,10 +421,13 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
         if (slot.id === slotId) {
           return {
             ...slot,
-            status: 'empty',
+            status: 'empty' as const,
             fileName: undefined,
+            fileSize: undefined,
             progress: undefined,
-            borderTheme: slot.required ? 'warning' : 'success',
+            error: undefined,
+            successMessage: undefined,
+            borderTheme: slot.required ? ('warning' as const) : ('success' as const),
           };
         }
         return slot;
@@ -343,73 +438,63 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
   completeSlotUpload: (slotId) => {
     set((state) => ({
       uploadSlots: state.uploadSlots.map((s) =>
-        s.id === slotId ? { ...s, status: 'uploaded', progress: 100 } : s
+        s.id === slotId
+          ? {
+              ...s,
+              status: 'uploaded' as const,
+              progress: 100,
+              borderTheme: 'success' as const,
+              error: undefined,
+              successMessage: '✓ Document validated and ready for submission.',
+            }
+          : s
       ),
     }));
   },
 
-  saveDraftClaim: () => {
-    set({ submitMessage: 'Draft claim saved successfully! You can resume anytime.' });
+  saveDraftClaim: async () => {
+    const response = await saveDraftClaimApi({
+      id: '#CLM-9821',
+      claimerName: 'Jane Doe',
+    });
+    set({ submitMessage: response.message });
     setTimeout(() => {
       set({ submitMessage: null });
     }, 4000);
   },
 
-  submitClaim: (onComplete) => {
+  submitClaim: async (onComplete) => {
     set({ isSubmittingClaim: true });
-    setTimeout(() => {
-      const newClaim: ClaimRecord = {
-        id: '#CLM-9821',
-        claimerName: 'Jane Doe',
-        carPolicy: 'POL-882',
-        submissionDate: new Date().toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        incidentDate: 'Oct 24, 2024, 11:30 AM',
-        incidentLocation: 'Pine & 6th Ave, Seattle, WA',
-        vehicle: '2020 Toyota Camry',
-        vin: '4T1B11HK2LU889YYY',
-        repairEstimate: 1450.0,
-        deductible: 200.0,
-        potentialPayout: 1250.0,
-        docsUploaded: get().uploadSlots.filter((s) => s.status === 'uploaded').length,
-        docsTotal: get().uploadSlots.length,
-        status: 'pending',
-        statusLabel: 'Pending',
-        diagnosisCode: 'J01.90 (Bumper / Hood Dent)',
-        aiSummary: {
-          damageAssessment: 'Front Bumper Scrape & Dent',
-          damageVerified: true,
-          policyMatching: 'Standard Coverage',
-          policyActive: true,
-          fraudScore: 9,
-          fraudLabel: 'Low Risk (9/100)',
-        },
-        financialBreakdown: {
-          originalEstimate: 1450.0,
-          deductible: 200.0,
-          consumables: 0.0,
-          approvedAmount: 1250.0,
-        },
-        validatorRemarks: 'Under review by motor division validator.',
-        expectedPayoutDate: 'Pending Review',
-        documents: [],
-      };
 
+    const uploadedSlots = get().uploadSlots.filter((s) => s.status === 'uploaded');
+    const response = await submitClaimApi({
+      claimId: '#CLM-9821',
+      claimerName: 'Jane Doe',
+      carPolicy: 'POL-882',
+      vehicle: '2020 Toyota Camry',
+      incidentDate: 'Oct 24, 2024, 11:30 AM',
+      incidentLocation: 'Pine & 6th Ave, Seattle, WA',
+      repairEstimate: 1450.0,
+      documents: uploadedSlots.map((s) => ({
+        category: s.categoryPayload,
+        fileName: s.fileName || s.title,
+        size: s.fileSize || '2.0 MB',
+      })),
+    });
+
+    if (response.success) {
       set((state) => ({
-        claims: [newClaim, ...state.claims],
-        selectedTrackingClaimId: newClaim.id,
+        claims: [response.claim, ...state.claims],
+        selectedTrackingClaimId: response.claim.id,
         isSubmittingClaim: false,
-        submitMessage: 'Claim #CLM-9821 submitted successfully! Redirecting to tracking...',
+        submitMessage: `Claim ${response.claim.id} submitted successfully! Redirecting to tracking...`,
       }));
 
       setTimeout(() => {
         set({ submitMessage: null, activeNav: 'history' });
         if (onComplete) onComplete();
       }, 1200);
-    }, 1000);
+    }
   },
 
   markAllNotificationsRead: () => {
@@ -418,3 +503,4 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
     }));
   },
 }));
+
