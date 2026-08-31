@@ -128,26 +128,26 @@ export const ResolutionDrawer: React.FC<ResolutionDrawerProps> = ({
               </div>
               <div className="px-4 py-3 border-b border-[#e2e8f0] flex justify-between text-[#0f1c2b] font-medium">
                 <span>Original Repair Estimate</span>
-                <span>${originalEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span>₹{originalEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="px-4 py-3 border-b border-[#e2e8f0] flex justify-between text-[#ba1a1a] font-medium">
                 <span className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">remove</span> Deductible / Depreciation
                 </span>
-                <span>-${deductible.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span>-₹{deductible.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               {consumables > 0 && (
                 <div className="px-4 py-3 border-b border-[#e2e8f0] flex justify-between text-[#ba1a1a] font-medium">
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">remove</span> Consumables (Not Covered)
                   </span>
-                  <span>-${consumables.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span>-₹{consumables.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
               <div className="bg-[#eef4ff] px-4 py-4 flex justify-between items-center border-t border-[#cde5fc]">
                 <span className="text-xs font-semibold text-[#4a6173]">Final Approved Amount</span>
                 <span className="text-xl font-bold text-[#00355f]">
-                  ${approvedAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ₹{approvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>

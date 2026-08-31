@@ -88,27 +88,27 @@ export const DownloadReportModal: React.FC = () => {
                 <tr className="border-t border-[#e2e8f0]">
                   <td className="p-2.5 font-medium">Original Certified Garage Estimate</td>
                   <td className="p-2.5 text-right font-bold">
-                    ${originalEstimate.toFixed(2)}
+                    ₹{originalEstimate.toFixed(2)}
                   </td>
                 </tr>
                 <tr className="border-t border-[#e2e8f0] text-red-600">
                   <td className="p-2.5">Standard Policy Deductible (Section 4.1)</td>
                   <td className="p-2.5 text-right font-bold">
-                    -${deductible.toFixed(2)}
+                    -₹{deductible.toFixed(2)}
                   </td>
                 </tr>
                 {consumables > 0 ? (
                   <tr className="border-t border-[#e2e8f0] text-red-600">
                     <td className="p-2.5">Non-Covered Consumables & Ancillary</td>
                     <td className="p-2.5 text-right font-bold">
-                      -${consumables.toFixed(2)}
+                      -₹{consumables.toFixed(2)}
                     </td>
                   </tr>
                 ) : null}
                 <tr className="border-t-2 border-[#00355f] bg-[#eef4ff] font-bold text-sm">
                   <td className="p-3 text-[#00355f]">Net Approved Payout</td>
                   <td className="p-3 text-right text-[#00355f]">
-                    ${approvedAmount.toFixed(2)}
+                    ₹{approvedAmount.toFixed(2)}
                   </td>
                 </tr>
               </tbody>

@@ -39,7 +39,7 @@ export const ClaimerModule: React.FC = () => {
                   <span className="text-[10px] text-[#64748b]">10m ago</span>
                 </div>
                 <p className="text-xs text-[#42474f] mt-1 leading-relaxed">
-                  Your collision claim of $1,050.00 has been verified by Senior Adjuster Alex Vance and scheduled for direct bank disbursement on Oct 20, 2024.
+                  Your collision claim of ₹1,050.00 has been verified by Senior Adjuster Alex Vance and scheduled for direct bank disbursement on Oct 20, 2024.
                 </p>
                 <button
                   onClick={() => setActiveNav('history')}

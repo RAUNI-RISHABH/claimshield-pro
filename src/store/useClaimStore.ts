@@ -153,7 +153,7 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
     {
       id: 'n1',
       title: 'Claim #CLM-2024-089 Approved',
-      desc: 'Your auto collision reimbursement claim for $1,050.00 has been approved.',
+      desc: 'Your auto collision reimbursement claim for ₹1,050.00 has been approved.',
       time: '10 minutes ago',
       read: false,
       type: 'success',

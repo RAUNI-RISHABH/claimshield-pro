@@ -313,20 +313,20 @@ export const AutoCollisionReportView: React.FC = () => {
             </div>
           </div>
 
-          {/* Financial Breakdown */}
+              {/* Financial Breakdown */}
           <div className="bg-white border border-[#c2c7d1] rounded-xl p-6 shadow-xs">
             <h2 className="text-lg font-bold text-[#0f1c2b] mb-4">Financial Breakdown</h2>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center py-2 border-b border-[#e2e8f0]">
                 <span className="text-sm text-[#42474f]">Estimated Repair Cost</span>
                 <span className="text-sm font-bold text-[#0f1c2b]">
-                  ${claim.repairEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ₹{claim.repairEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-[#e2e8f0]">
                 <span className="text-sm text-[#42474f]">Deductible (Applied)</span>
                 <span className="text-sm font-bold text-[#ba1a1a]">
-                  -${claim.deductible.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  -₹{claim.deductible.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 pt-4">
@@ -334,10 +334,10 @@ export const AutoCollisionReportView: React.FC = () => {
                   {isSucceeded ? 'Approved Settlement Amount' : 'Potential Payout'}
                 </span>
                 <span className={`text-xl font-bold ${isSucceeded ? 'text-emerald-700' : 'text-[#4a6173]'}`}>
-                  ${(isSucceeded
+                  ₹{(isSucceeded
                     ? (claim.financialBreakdown?.approvedAmount ?? claim.potentialPayout)
                     : claim.potentialPayout
-                  ).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
@@ -427,10 +427,10 @@ export const AutoCollisionReportView: React.FC = () => {
                       <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed">
                         Authorized disbursement of{' '}
                         <span className="font-bold font-mono">
-                          $
+                          ₹
                           {(
                             claim.financialBreakdown?.approvedAmount ?? claim.potentialPayout
-                          ).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          ).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </span>
                         . No further adjuster actions required.
                       </p>
@@ -601,13 +601,13 @@ export const AutoCollisionReportView: React.FC = () => {
                 <div>
                   <span className="text-[10px] text-[#64748b] uppercase block">Repair Estimate</span>
                   <span className="font-bold text-[#0f1c2b]">
-                    ${claim.repairEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ₹{claim.repairEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-[#64748b] uppercase block">Current Payout</span>
                   <span className="font-bold text-[#00355f]">
-                    ${claim.potentialPayout.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ₹{claim.potentialPayout.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -617,7 +617,7 @@ export const AutoCollisionReportView: React.FC = () => {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-[11px] font-bold text-[#0f1c2b] mb-1">
-                      Applied Deductible ($)
+                      Applied Deductible (₹)
                     </label>
                     <input
                       type="number"
@@ -630,11 +630,11 @@ export const AutoCollisionReportView: React.FC = () => {
                     <p className="text-[11px] text-[#64748b] mt-1">
                       Final settlement amount:{' '}
                       <span className="font-bold text-emerald-700 font-mono">
-                        $
+                        ₹
                         {Math.max(
                           0,
                           claim.repairEstimate - (parseFloat(confirmModal.deductible) || 0)
-                        ).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        ).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </span>
                     </p>
                   </div>

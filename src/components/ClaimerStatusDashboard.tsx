@@ -248,13 +248,13 @@ export const ClaimerStatusDashboard: React.FC = () => {
             <div className="flex justify-between items-center border-b border-[#e2e8f0] pb-2.5">
               <span className="text-[#42474f]">Claimed Amount</span>
               <span className="font-semibold text-[#0f1c2b]">
-                ${selectedClaim.repairEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ₹{selectedClaim.repairEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="flex justify-between items-center border-b border-[#e2e8f0] pb-2.5">
               <span className="text-[#42474f]">Approved Amount</span>
               <span className="text-lg font-bold text-[#10b981]">
-                ${selectedClaim.financialBreakdown.approvedAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ₹{selectedClaim.financialBreakdown.approvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="pt-1">
@@ -301,7 +301,7 @@ export const ClaimerStatusDashboard: React.FC = () => {
 
               <div className="text-right">
                 <span className="text-xs font-bold text-[#0f1c2b]">
-                  ${claim.repairEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ₹{claim.repairEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
                 <p className="text-[10px] text-[#727780]">{claim.submissionDate}</p>
               </div>

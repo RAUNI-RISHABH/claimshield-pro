@@ -87,7 +87,7 @@ export const ValidatorModule: React.FC = () => {
                       Approved
                     </span>
                   </td>
-                  <td className="p-3 font-mono font-medium">$500.00</td>
+                  <td className="p-3 font-mono font-medium">₹500.00</td>
                   <td className="p-3 text-[#64748b]">Today, 10:14 AM</td>
                 </tr>
                 <tr className="hover:bg-[#f8fafc]">
@@ -98,7 +98,7 @@ export const ValidatorModule: React.FC = () => {
                       Approved
                     </span>
                   </td>
-                  <td className="p-3 font-mono font-medium">$250.00</td>
+                  <td className="p-3 font-mono font-medium">₹250.00</td>
                   <td className="p-3 text-[#64748b]">Yesterday, 04:30 PM</td>
                 </tr>
                 <tr className="hover:bg-[#f8fafc]">
@@ -109,7 +109,7 @@ export const ValidatorModule: React.FC = () => {
                       Rejected
                     </span>
                   </td>
-                  <td className="p-3 font-mono font-medium">$0.00</td>
+                  <td className="p-3 font-mono font-medium">₹0.00</td>
                   <td className="p-3 text-[#64748b]">Oct 21, 2024</td>
                 </tr>
               </tbody>
@@ -146,7 +146,7 @@ export const ValidatorModule: React.FC = () => {
                 </p>
               </div>
               <span className="font-mono font-bold text-sm text-[#00355f] bg-[#eef4ff] px-3 py-1 rounded-lg">
-                $500.00
+                ₹500.00
               </span>
             </div>
 

@@ -195,7 +195,7 @@ export const SplitScreenVerificationModal: React.FC = () => {
                 <div>
                   <p className="text-[11px] text-[#64748b] mb-0.5">Claimed Amount</p>
                   <p className="text-sm font-bold text-[#0f1c2b]">
-                    ${claim.repairEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ₹{claim.repairEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -255,7 +255,7 @@ export const SplitScreenVerificationModal: React.FC = () => {
             <div className="p-5 flex-1 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-[#334155] mb-1">
-                  Deductions / Adjustments ($)
+                  Deductions / Adjustments (₹)
                 </label>
                 <input
                   type="number"

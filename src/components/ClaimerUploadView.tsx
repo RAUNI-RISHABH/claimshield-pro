@@ -146,10 +146,6 @@ export const ClaimerUploadView: React.FC = () => {
                       >
                         {slot.subtitle}
                       </span>
-                      <span className="text-slate-300 text-[10px]">•</span>
-                      <span className="text-[10px] font-mono text-[#4a6173] bg-white/70 px-1.5 py-0.2 rounded border border-slate-200">
-                        payload: "{slot.categoryPayload}"
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -268,7 +264,7 @@ export const ClaimerUploadView: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold text-[#0f1c2b] truncate">{slot.fileName}</p>
                         <p className="text-[10px] text-[#00355f]">
-                          Calling API validation check ({slot.categoryPayload})...
+                          Validating document with AI verification...
                         </p>
                       </div>
                     </div>

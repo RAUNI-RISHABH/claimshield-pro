@@ -131,7 +131,7 @@ export const ValidatorQueueView: React.FC = () => {
 
                     {/* Repair Estimate */}
                     <td className="py-3 px-4 text-right font-semibold text-[#0f1c2b]">
-                      ${claim.repairEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ₹{claim.repairEstimate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
 
                     {/* Docs Badge */}
