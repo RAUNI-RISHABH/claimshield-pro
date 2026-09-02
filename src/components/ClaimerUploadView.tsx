@@ -92,7 +92,7 @@ export const ClaimerUploadView: React.FC = () => {
       )}
 
       {/* Document Upload Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         {slots.map((slot) => {
           const isError = slot.status === 'error' || !!slot.error;
           const isUploaded = slot.status === 'uploaded';
@@ -191,12 +191,12 @@ export const ClaimerUploadView: React.FC = () => {
                     </div>
 
                     {/* Scrollable Error Message Container inside Card */}
-                    <div className="max-h-24 overflow-y-auto custom-scrollbar p-3 bg-red-100/90 border border-red-200 rounded-lg text-xs text-red-900 leading-relaxed font-medium space-y-1">
+                    <div className="max-h-32 overflow-y-auto custom-scrollbar p-3 bg-red-100 border border-red-300 rounded-lg text-xs text-red-950 leading-relaxed font-medium space-y-1">
                       <div className="flex items-center gap-1 text-red-950 font-bold text-[11px] uppercase tracking-wide">
-                        <span className="material-symbols-outlined text-[14px]">warning</span>
+                        <span className="material-symbols-outlined text-[14px] text-red-700">warning</span>
                         Validation Alert
                       </div>
-                      <p>{slot.error}</p>
+                      <p className="whitespace-pre-wrap font-semibold text-red-950 text-[11px]">{slot.error}</p>
                     </div>
 
                     {/* In-Card Re-upload Trigger */}
@@ -204,6 +204,11 @@ export const ClaimerUploadView: React.FC = () => {
                       <input
                         type="file"
                         className="hidden"
+                        accept={
+                          slot.categoryPayload === 'accident_photos'
+                            ? 'image/jpeg,image/png,image/jpg,image/webp,image/heic'
+                            : 'application/pdf,.pdf'
+                        }
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             handleFileUpload(slot.id, e.target.files[0]);
@@ -293,6 +298,11 @@ export const ClaimerUploadView: React.FC = () => {
                     <input
                       type="file"
                       className="hidden"
+                      accept={
+                        slot.categoryPayload === 'accident_photos'
+                          ? 'image/jpeg,image/png,image/jpg,image/webp,image/heic'
+                          : 'application/pdf,.pdf'
+                      }
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           handleFileUpload(slot.id, e.target.files[0]);
@@ -312,7 +322,12 @@ export const ClaimerUploadView: React.FC = () => {
 
               {/* Card Footer Info */}
               <div className="pt-2 border-t border-slate-200/60 flex justify-between items-center text-[10px] text-[#64748b]">
-                <span>Accepts PDF, JPG, PNG up to 10MB</span>
+                <span>
+                  {slot.categoryPayload === 'accident_photos'
+                    ? 'Accepts JPEG, JPG, PNG'
+                    : 'Accepts PDF only'}{' '}
+                  up to 10MB
+                </span>
                 {isUploaded && <span className="text-emerald-700 font-bold">Ready</span>}
               </div>
             </div>
