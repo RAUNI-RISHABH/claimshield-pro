@@ -162,6 +162,33 @@ export const SideNavBar: React.FC = () => {
                 {!isCollapsed && <span className="truncate">Claim Tracker</span>}
               </button>
 
+              {/* Policy Enquiry Chat (RAG AI) */}
+              <button
+                onClick={() => handleNavigate('enquiry')}
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
+                  activeNav === 'enquiry'
+                    ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
+                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                title="Policy Enquiry Chat (RAG AI)"
+              >
+                <span
+                  className={`material-symbols-outlined text-[20px] ${
+                    activeNav === 'enquiry' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                  }`}
+                >
+                  smart_toy
+                </span>
+                {!isCollapsed && (
+                  <div className="flex items-center justify-between flex-1 min-w-0">
+                    <span className="truncate">Enquiry Chat</span>
+                    <span className="ml-1 text-[9px] font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30 px-1.5 py-0.5 rounded uppercase">
+                      AI
+                    </span>
+                  </div>
+                )}
+              </button>
+
               {/* Notifications */}
               <button
                 onClick={() => handleNavigate('notifications')}

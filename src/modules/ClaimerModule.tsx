@@ -2,6 +2,7 @@ import React from 'react';
 import { useClaimStore } from '../store/useClaimStore';
 import { ClaimerUploadView } from '../components/ClaimerUploadView';
 import { ClaimerStatusDashboard } from '../components/ClaimerStatusDashboard';
+import { EnquiryChatView } from '../components/EnquiryChatView';
 
 export const ClaimerModule: React.FC = () => {
   const activeNav = useClaimStore((state) => state.activeNav);
@@ -13,6 +14,8 @@ export const ClaimerModule: React.FC = () => {
       {activeNav === 'upload' && <ClaimerUploadView />}
 
       {activeNav === 'history' && <ClaimerStatusDashboard />}
+
+      {activeNav === 'enquiry' && <EnquiryChatView />}
 
       {activeNav === 'notifications' && (
         <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 sm:p-8 max-w-3xl shadow-xs">
