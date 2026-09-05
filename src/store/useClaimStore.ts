@@ -1,7 +1,22 @@
 import { create } from 'zustand';
 import { UserRole, ClaimRecord, DocumentItem, UserProfile } from '../types';
 import { INITIAL_CLAIMS, INITIAL_UPLOAD_SLOTS, HOTLINKED_ASSETS } from '../data';
-import { uploadAndValidateDocument, submitClaimApi, saveDraftClaimApi } from '../api/claimerApi';
+import { uploadAndValidateDocument, classifyAutoDocument, submitClaimApi, saveDraftClaimApi, submitClaimClassificationApi, uploadClaimDocumentsToStorageApi } from '../api/claimerApi';
+
+export interface BatchUploadedFile {
+  id: string;
+  file: File;
+  fileName: string;
+  fileSize: string;
+  fileType: string;
+  status: 'uploading' | 'validated' | 'error';
+  progress?: number;
+  detectedCategory?: 'accident_photos' | 'insurance_policy' | 'repair_invoice' | 'unknown' | string;
+  confidence?: number;
+  message?: string;
+  error?: string;
+  uploadedAt: string;
+}
 
 export interface UploadSlot {
   id: string;
@@ -66,11 +81,25 @@ interface ClaimStoreState {
   selectedClaimForReviewId: string;
   selectedClaimForReportId: string | null;
 
-  // Upload slots for Claimer
+  // Upload slots for Claimer (Legacy single-slot)
   uploadSlots: UploadSlot[];
   showErrorToast: boolean;
   isSubmittingClaim: boolean;
   submitMessage: string | null;
+  submitError: string | null;
+
+  // Multi-Document Upload for Claimer
+  batchFiles: BatchUploadedFile[];
+  carFiles: BatchUploadedFile[];
+  pdfFiles: BatchUploadedFile[];
+  uploadBatchFiles: (files: FileList | File[]) => Promise<void>;
+  uploadCarFiles: (files: FileList | File[]) => Promise<void>;
+  uploadPdfFiles: (files: FileList | File[]) => Promise<void>;
+  removeBatchFile: (fileId: string) => void;
+  removeCarFile: (fileId: string) => void;
+  removePdfFile: (fileId: string) => void;
+  clearBatchFiles: () => void;
+  clearAllUploads: () => void;
 
   // Modals & Drawers
   isSplitVerificationOpen: boolean;
@@ -106,6 +135,7 @@ interface ClaimStoreState {
 
   setShowErrorToast: (show: boolean) => void;
   setSubmitMessage: (msg: string | null) => void;
+  setSubmitError: (msg: string | null) => void;
 
   // Claim management actions
   updateClaimStatus: (claimId: string, newStatus: 'approved' | 'rejected' | 'pending') => void;
@@ -140,9 +170,13 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
   selectedTrackingClaimId: '#CLM-2024-089',
 
   uploadSlots: INITIAL_UPLOAD_SLOTS as UploadSlot[],
+  batchFiles: [],
+  carFiles: [],
+  pdfFiles: [],
   showErrorToast: false,
   isSubmittingClaim: false,
   submitMessage: null,
+  submitError: null,
 
   isSplitVerificationOpen: false,
   isDownloadModalOpen: false,
@@ -252,6 +286,7 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
 
   setShowErrorToast: (showErrorToast: boolean) => set({ showErrorToast }),
   setSubmitMessage: (submitMessage: string | null) => set({ submitMessage }),
+  setSubmitError: (submitError: string | null) => set({ submitError }),
 
   updateClaimStatus: (claimId, newStatus) => {
     set((state) => ({
@@ -452,6 +487,172 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
     }));
   },
 
+  uploadBatchFiles: async (filesInput) => {
+    const files = Array.from(filesInput);
+    if (files.length === 0) return;
+
+    // 1. Generate items with immediate format validation
+    const newItems: BatchUploadedFile[] = files.map((file) => {
+      const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(file.name);
+      const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+      const isFormatAllowed = isImage || isPdf;
+
+      return {
+        id: `batch-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        file,
+        fileName: file.name,
+        fileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+        fileType: file.type || (isPdf ? 'application/pdf' : 'image/jpeg'),
+        status: isFormatAllowed ? ('uploading' as const) : ('error' as const),
+        progress: isFormatAllowed ? 30 : undefined,
+        error: isFormatAllowed
+          ? undefined
+          : 'Invalid file format. Only JPEG, JPG, PNG images and PDF documents are allowed.',
+        uploadedAt: new Date().toISOString(),
+      };
+    });
+
+    set((state) => ({
+      batchFiles: [...state.batchFiles, ...newItems],
+    }));
+
+    // 2. Concurrently classify supported files via Classification API
+    await Promise.all(
+      newItems.map(async (item) => {
+        if (item.status === 'error') return;
+
+        // Simulated progress increment
+        setTimeout(() => {
+          set((state) => ({
+            batchFiles: state.batchFiles.map((f) =>
+              f.id === item.id && f.status === 'uploading' ? { ...f, progress: 75 } : f
+            ),
+          }));
+        }, 300);
+
+        try {
+          const res = await classifyAutoDocument(item.file);
+
+          set((state) => ({
+            batchFiles: state.batchFiles.map((f) => {
+              if (f.id !== item.id) return f;
+              if (res.success) {
+                return {
+                  ...f,
+                  status: 'validated' as const,
+                  progress: 100,
+                  detectedCategory: res.category,
+                  confidence: res.classificationResult?.confidence ?? 0.95,
+                  message: res.message,
+                  error: undefined,
+                };
+              } else {
+                return {
+                  ...f,
+                  status: 'error' as const,
+                  progress: undefined,
+                  detectedCategory: res.category,
+                  error: res.error || res.message || 'Validation failed for this document.',
+                };
+              }
+            }),
+          }));
+        } catch (err: any) {
+          set((state) => ({
+            batchFiles: state.batchFiles.map((f) =>
+              f.id === item.id
+                ? {
+                    ...f,
+                    status: 'error' as const,
+                    progress: undefined,
+                    error: err.message || 'Classification request failed.',
+                  }
+                : f
+            ),
+          }));
+        }
+      })
+    );
+  },
+
+  removeBatchFile: (fileId) => {
+    set((state) => ({
+      batchFiles: state.batchFiles.filter((f) => f.id !== fileId),
+    }));
+  },
+
+  uploadCarFiles: async (filesInput) => {
+    const files = Array.from(filesInput);
+    if (files.length === 0) return;
+
+    const newItems: BatchUploadedFile[] = files.map((file) => {
+      const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(file.name);
+      return {
+        id: `car-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        file,
+        fileName: file.name,
+        fileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+        fileType: file.type || 'image/jpeg',
+        status: isImage ? ('validated' as const) : ('error' as const),
+        detectedCategory: 'vehiclepicture',
+        error: isImage
+          ? undefined
+          : 'Invalid format. Car photos must be JPEG, JPG, or PNG images only.',
+        uploadedAt: new Date().toISOString(),
+      };
+    });
+
+    set((state) => ({
+      carFiles: [...state.carFiles, ...newItems],
+    }));
+  },
+
+  uploadPdfFiles: async (filesInput) => {
+    const files = Array.from(filesInput);
+    if (files.length === 0) return;
+
+    const newItems: BatchUploadedFile[] = files.map((file) => {
+      const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+      return {
+        id: `pdf-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        file,
+        fileName: file.name,
+        fileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+        fileType: 'application/pdf',
+        status: isPdf ? ('validated' as const) : ('error' as const),
+        detectedCategory: 'Additional_documents',
+        error: isPdf
+          ? undefined
+          : 'Invalid format. Insurance policy and repair invoice must be PDF files only.',
+        uploadedAt: new Date().toISOString(),
+      };
+    });
+
+    set((state) => ({
+      pdfFiles: [...state.pdfFiles, ...newItems],
+    }));
+  },
+
+  removeCarFile: (fileId) => {
+    set((state) => ({
+      carFiles: state.carFiles.filter((f) => f.id !== fileId),
+    }));
+  },
+
+  removePdfFile: (fileId) => {
+    set((state) => ({
+      pdfFiles: state.pdfFiles.filter((f) => f.id !== fileId),
+    }));
+  },
+
+  clearBatchFiles: () => {
+    set({ batchFiles: [] });
+  },
+
+  clearAllUploads: () => {
+    set({ carFiles: [], pdfFiles: [], batchFiles: [] });
+  },
+
   saveDraftClaim: async () => {
     const response = await saveDraftClaimApi({
       id: '#CLM-9821',
@@ -464,36 +665,93 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
   },
 
   submitClaim: async (onComplete) => {
-    set({ isSubmittingClaim: true });
+    set({ isSubmittingClaim: true, submitError: null, submitMessage: null });
 
+    // 1. Extract File objects for car photos and supporting PDFs
+    const carFileList = get().carFiles.filter((f) => f.status === 'validated').map((f) => f.file);
+    const pdfFileList = get().pdfFiles.filter((f) => f.status === 'validated').map((f) => f.file);
+
+    // 2. Call backend storage upload endpoint: POST http://127.0.0.1:8000/api/v1/claims/upload-to-storage
+    // Appends car photos and supporting PDFs under repeated key 'files', plus description & claim_status
+    console.log('[submitClaim] Uploading documents to storage: http://127.0.0.1:8000/api/v1/claims/upload-to-storage ...');
+    const storageResult = await uploadClaimDocumentsToStorageApi(carFileList, pdfFileList, {
+      description: 'Four-wheeler accident claim with 4-side photos and policy docs',
+      claim_status: 'PENDING_VERIFICATION',
+    });
+
+    if (!storageResult.success) {
+      console.error('[submitClaim] Storage upload failure:', storageResult.error);
+      set({
+        isSubmittingClaim: false,
+        submitError:
+          storageResult.error ||
+          'Failed to upload documents to storage service (http://127.0.0.1:8000/api/v1/claims/upload-to-storage). Please check backend connection and retry.',
+      });
+      return;
+    }
+
+    console.log('[submitClaim] Storage upload succeeded:', storageResult.data);
+
+    // 3. Optional: Call classification endpoint for additional verification if needed
+    try {
+      await submitClaimClassificationApi(carFileList, pdfFileList);
+    } catch (apiErr) {
+      console.warn('[submitClaim] Optional classification call caught error:', apiErr);
+    }
+
+    // 4. Collect validated documents for claim record creation
+    const carList = get().carFiles.filter((f) => f.status === 'validated');
+    const pdfList = get().pdfFiles.filter((f) => f.status === 'validated');
+    const batchList = get().batchFiles.filter((f) => f.status === 'validated');
     const uploadedSlots = get().uploadSlots.filter((s) => s.status === 'uploaded');
+
+    const combinedList = [...carList, ...pdfList, ...batchList];
+
+    const documentsToSubmit =
+      combinedList.length > 0
+        ? combinedList.map((f) => ({
+            category: f.detectedCategory || (f.fileType.startsWith('image') ? 'vehiclepicture' : 'Additional_documents'),
+            fileName: f.fileName,
+            size: f.fileSize,
+          }))
+        : uploadedSlots.map((s) => ({
+            category: s.categoryPayload,
+            fileName: s.fileName || s.title,
+            size: s.fileSize || '2.0 MB',
+          }));
+
     const response = await submitClaimApi({
-      claimId: '#CLM-9821',
+      claimId: storageResult.data?.claim_id || storageResult.data?.claimId || '#CLM-9821',
       claimerName: 'Jane Doe',
       carPolicy: 'POL-882',
       vehicle: '2020 Toyota Camry',
       incidentDate: 'Oct 24, 2024, 11:30 AM',
       incidentLocation: 'Pine & 6th Ave, Seattle, WA',
       repairEstimate: 1450.0,
-      documents: uploadedSlots.map((s) => ({
-        category: s.categoryPayload,
-        fileName: s.fileName || s.title,
-        size: s.fileSize || '2.0 MB',
-      })),
+      documents: documentsToSubmit,
     });
 
     if (response.success) {
+      const successMessage =
+        storageResult.data?.message ||
+        `Claim ${response.claim.id} documents uploaded to storage successfully! Redirecting to tracking...`;
+
       set((state) => ({
         claims: [response.claim, ...state.claims],
         selectedTrackingClaimId: response.claim.id,
         isSubmittingClaim: false,
-        submitMessage: `Claim ${response.claim.id} submitted successfully! Redirecting to tracking...`,
+        submitMessage: successMessage,
       }));
 
       setTimeout(() => {
         set({ submitMessage: null, activeNav: 'history' });
         if (onComplete) onComplete();
-      }, 1200);
+      }, 1500);
+    } else {
+      set({
+        isSubmittingClaim: false,
+        submitError: response.message || 'Failed to complete claim submission.',
+      });
     }
   },
 

@@ -1,75 +1,83 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useClaimStore } from '../store/useClaimStore';
+import { formatCategoryTitle } from '../api/claimerApi';
 
 export const ClaimerUploadView: React.FC = () => {
-  const slots = useClaimStore((state) => state.uploadSlots);
+  const carFiles = useClaimStore((state) => state.carFiles);
+  const pdfFiles = useClaimStore((state) => state.pdfFiles);
+  const uploadCarFiles = useClaimStore((state) => state.uploadCarFiles);
+  const uploadPdfFiles = useClaimStore((state) => state.uploadPdfFiles);
+  const removeCarFile = useClaimStore((state) => state.removeCarFile);
+  const removePdfFile = useClaimStore((state) => state.removePdfFile);
+  const clearAllUploads = useClaimStore((state) => state.clearAllUploads);
+
   const isSubmitting = useClaimStore((state) => state.isSubmittingClaim);
   const submitMessage = useClaimStore((state) => state.submitMessage);
   const setSubmitMessage = useClaimStore((state) => state.setSubmitMessage);
-  const uploadFileToSlot = useClaimStore((state) => state.uploadFileToSlot);
-  const removeFileFromSlot = useClaimStore((state) => state.removeFileFromSlot);
+  const submitError = useClaimStore((state) => state.submitError);
+  const setSubmitError = useClaimStore((state) => state.setSubmitError);
   const saveDraftClaim = useClaimStore((state) => state.saveDraftClaim);
   const submitClaim = useClaimStore((state) => state.submitClaim);
   const setActiveNav = useClaimStore((state) => state.setActiveNav);
 
-  const handleFileUpload = (slotId: string, file: File) => {
-    uploadFileToSlot(slotId, file);
-  };
+  const [isDraggingCar, setIsDraggingCar] = useState(false);
+  const [isDraggingPdf, setIsDraggingPdf] = useState(false);
 
-  const handleRemoveFile = (slotId: string) => {
-    removeFileFromSlot(slotId);
-  };
+  const carInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmitClaim = () => {
-    submitClaim();
-  };
+  // Both categories must be loaded to enable claim submission
+  const hasCarUploaded = carFiles.length > 0;
+  const hasPdfUploaded = pdfFiles.length > 0;
+  const bothUploaded = hasCarUploaded && hasPdfUploaded;
 
-  // Validation: Check all required document slots
-  const requiredSlots = slots.filter((s) => s.required);
-  const validatedRequiredCount = requiredSlots.filter((s) => s.status === 'uploaded').length;
-  const hasErrors = slots.some((s) => s.status === 'error');
-  const allRequiredValidated = requiredSlots.every((s) => s.status === 'uploaded') && !hasErrors;
+  const isUploadingAny =
+    carFiles.some((f) => f.status === 'uploading') ||
+    pdfFiles.some((f) => f.status === 'uploading');
+
+  const canSubmit = bothUploaded && !isSubmitting && !isUploadingAny;
 
   return (
-    <div className="flex-1 pb-36 max-w-7xl mx-auto w-full">
+    <div className="flex-1 pb-36 max-w-7xl mx-auto w-full px-2 sm:px-4">
       {/* Breadcrumbs & Header */}
       <div className="mb-6">
-        <nav className="flex items-center gap-2 text-xs text-[#42474f] mb-2 font-medium">
+        {/* <nav className="flex items-center gap-2 text-xs text-[#42474f] mb-2 font-medium">
           <button
             onClick={() => setActiveNav('history')}
-            className="hover:text-[#4a6173] transition-colors cursor-pointer"
+            className="hover:text-[#00355f] transition-colors cursor-pointer"
           >
             Claims
           </button>
           <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-          <span className="hover:text-[#4a6173] transition-colors">Motor Claims</span>
+          <span className="hover:text-[#00355f] transition-colors">Motor Claims</span>
           <span className="material-symbols-outlined text-[16px]">chevron_right</span>
           <span className="text-[#0f1c2b] font-semibold">Reimbursement Document Portal</span>
-        </nav>
+        </nav> */}
 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-[#0f1c2b] tracking-tight">
-              Multi-Document Upload & AI Verification
+              Motor Claim Document Upload
             </h1>
             <p className="text-xs text-[#64748b] mt-1">
-              Active Claim Submission ID: <span className="font-bold font-mono text-[#00355f]">#CLM-9821</span> • Motor Policy <span className="font-semibold font-mono">POL-882</span>
+              Active Claim Submission ID: <span className="font-bold font-mono text-[#00355f]">#CLM-9821</span> • Motor Policy <span className="font-semibold font-mono text-slate-800">POL-882</span> • Vehicle: <span className="font-medium text-slate-700">2020 Toyota Camry</span>
             </p>
           </div>
 
-          {/* Dynamic Requirements Status Badge */}
+          {/* Submission Readiness Badge */}
           <div className="flex items-center gap-2">
             <span
-              className={`text-xs px-3.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1.5 transition-colors ${
-                allRequiredValidated
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-[#eef4ff] text-[#00355f] border-[#cde5fc]'
-              }`}
+              className={`text-xs px-3.5 py-1.5 rounded-lg border font-semibold flex items-center gap-2 transition-all shadow-2xs ${bothUploaded
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-300/40'
+                : 'bg-amber-50 text-amber-900 border-amber-200'
+                }`}
             >
-              <span className="material-symbols-outlined text-[16px]">
-                {allRequiredValidated ? 'verified' : 'fact_check'}
+              <span className="material-symbols-outlined text-[18px]">
+                {bothUploaded ? 'verified' : 'pending_actions'}
               </span>
-              Required: {validatedRequiredCount} of {requiredSlots.length} Validated
+              {bothUploaded
+                ? 'Both Uploads Ready for Submission'
+                : `Uploads: ${hasCarUploaded ? 1 : 0} of 2 Completed`}
             </span>
           </div>
         </div>
@@ -77,7 +85,7 @@ export const ClaimerUploadView: React.FC = () => {
 
       {/* Success Notification Alert */}
       {submitMessage && (
-        <div className="bg-[#ecfdf5] border-l-4 border-[#10b981] p-4 rounded-r-lg mb-6 flex items-center justify-between shadow-sm animate-in fade-in">
+        <div className="bg-[#ecfdf5] border-l-4 border-[#10b981] p-4 rounded-r-lg mb-6 flex items-center justify-between shadow-xs animate-in fade-in">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-[#10b981] filled-icon">check_circle</span>
             <p className="text-xs text-[#065f46] font-medium">{submitMessage}</p>
@@ -91,298 +99,453 @@ export const ClaimerUploadView: React.FC = () => {
         </div>
       )}
 
-      {/* Document Upload Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-        {slots.map((slot) => {
-          const isError = slot.status === 'error' || !!slot.error;
-          const isUploaded = slot.status === 'uploaded';
-          const isUploading = slot.status === 'uploading';
-          const isEmpty = slot.status === 'empty' && !isError;
+      {/* Failure Notification Alert */}
+      {submitError && (
+        <div className="bg-[#fef2f2] border-l-4 border-[#ef4444] p-4 rounded-r-lg mb-6 flex items-center justify-between shadow-xs animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-[#ef4444] text-[20px] mt-0.5">error</span>
+            <div>
+              <p className="text-xs text-[#991b1b] font-bold">Document Upload to Storage Failed</p>
+              <p className="text-xs text-[#b91c1c] font-medium mt-0.5">{submitError}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setSubmitError(null)}
+            className="text-[#991b1b] hover:bg-red-100 p-1 rounded-full cursor-pointer ml-3 shrink-0"
+            title="Dismiss error"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      )}
 
-          // Card Container Classes
-          let cardClasses =
-            'rounded-xl p-5 flex flex-col justify-between transition-all duration-200 relative min-h-[260px] ';
+      {/* Main Two-Box Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* =========================================================================
+            BOX 1: REQUIRED DOCUMENTS LIST (Left Column, 5 cols)
+            ========================================================================= */}
+        <div className="lg:col-span-5 bg-white border border-[#e2e8f0] rounded-2xl shadow-xs overflow-hidden flex flex-col h-full">
+          {/* Box 1 Header */}
+          <div className="p-5 border-b border-[#e2e8f0] bg-slate-50/70">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00355f] text-white text-xs font-bold">
+                  1
+                </span>
+                <h2 className="text-sm font-bold text-[#0f1c2b]">Required Documents</h2>
+              </div>
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#eef4ff] text-[#00355f] border border-[#cde5fc]">
+                3 Required
+              </span>
+            </div>
+            <p className="text-xs text-[#64748b] mt-1.5 leading-relaxed">
+              These documents will be verified by an agent. Please ensure you upload the correct documents; failure to do so can lead to claim rejection.
+            </p>
+          </div>
 
-          if (isError) {
-            cardClasses += 'bg-red-50/60 border-2 border-red-500 shadow-sm ring-1 ring-red-400/30';
-          } else if (isUploaded) {
-            cardClasses += 'bg-emerald-50/50 border-2 border-[#10b981] shadow-sm ring-1 ring-emerald-300/30';
-          } else if (isUploading) {
-            cardClasses += 'bg-[#eef4ff] border-2 border-[#00355f] shadow-xs';
-          } else {
-            // Empty state
-            cardClasses += slot.required
-              ? 'bg-white border-2 border-dashed border-amber-300 hover:border-amber-400 hover:bg-amber-50/20'
-              : 'bg-white border border-[#e2e8f0] hover:border-[#4a6173] hover:bg-slate-50/40';
-          }
-
-          return (
-            <div key={slot.id} className={cardClasses}>
-              {/* Card Header: Icon + Title + Category Tag + Status Badge */}
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                      isError
-                        ? 'bg-red-100 text-red-700'
-                        : isUploaded
-                        ? 'bg-emerald-100 text-[#10b981]'
-                        : isUploading
-                        ? 'bg-[#d2e4ff] text-[#00355f]'
-                        : slot.required
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[22px]">{slot.icon}</span>
+          {/* Box 1 Document List Items */}
+          <div className="p-5 space-y-4 flex-1 flex flex-col justify-start">
+            {/* Document Item 1: Car Photos */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-amber-100 text-amber-800">
+                  <span className="material-symbols-outlined text-[22px]">photo_camera</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h3 className="text-xs font-bold text-[#0f1c2b]">Car Photos (Multiple Images)</h3>
                   </div>
+                  <p className="text-[11px] text-[#64748b] mt-1.5 leading-relaxed">
+                    Upload multiple exterior photographs showing vehicle damage covering four sides (front, rear, left, and right panels) as well as close-up damage views.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Document Item 2: Insurance Policy */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-blue-100 text-[#00355f]">
+                  <span className="material-symbols-outlined text-[22px]">verified_user</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h3 className="text-xs font-bold text-[#0f1c2b]">Insurance Policy</h3>
+                  </div>
+                  <p className="text-[11px] text-[#64748b] mt-1.5 leading-relaxed">
+                    Active motor insurance policy certificate and schedule document matching policy number POL-882.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Document Item 3: Repair Invoice & Estimates */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-indigo-100 text-indigo-700">
+                  <span className="material-symbols-outlined text-[22px]">receipt_long</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h3 className="text-xs font-bold text-[#0f1c2b]">Repair Invoice & Estimates</h3>
+                  </div>
+                  <p className="text-[11px] text-[#64748b] mt-1.5 leading-relaxed">
+                    Itemized garage tax invoice, repair estimate, or workshop bill detailing replaced parts, labor costs, and GST details.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            BOX 2: DEDICATED UPLOADS (Right Column, 7 cols)
+            Section A: Car Photos (Multiple JPEG, JPG, PNG)
+            Section B: Supporting Documents (Multiple PDFs)
+            ========================================================================= */}
+        <div className="lg:col-span-7 bg-white border border-[#e2e8f0] rounded-2xl shadow-xs overflow-hidden flex flex-col h-full">
+          {/* Box 2 Header */}
+          <div className="p-5 border-b border-[#e2e8f0] bg-slate-50/70 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00355f] text-white text-xs font-bold">
+                2
+              </span>
+              <div>
+                <h2 className="text-sm font-bold text-[#0f1c2b]">Document Uploads</h2>
+                <p className="text-[11px] text-[#64748b]">Upload multiple car photos and multiple supporting PDF documents below</p>
+              </div>
+            </div>
+
+            {(carFiles.length > 0 || pdfFiles.length > 0) && (
+              <button
+                onClick={clearAllUploads}
+                className="text-[11px] font-semibold text-slate-500 hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[14px]">delete_sweep</span>
+                Clear All
+              </button>
+            )}
+          </div>
+
+          <div className="p-5 space-y-6 flex-1">
+            {/* -------------------------------------------------------------
+                UPLOAD SECTION 1: CAR PHOTOS (Multiple Images)
+                ------------------------------------------------------------- */}
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-700 text-[20px]">
+                    photo_camera
+                  </span>
                   <div>
-                    <h3 className="text-xs font-bold text-[#0f1c2b] leading-snug">{slot.title}</h3>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span
-                        className={`text-[10px] font-semibold uppercase tracking-wider ${
-                          slot.required ? 'text-amber-700 font-bold' : 'text-slate-500'
-                        }`}
-                      >
-                        {slot.subtitle}
-                      </span>
-                    </div>
+                    <h3 className="text-xs font-bold text-[#0f1c2b]">Car Photos (Multiple Images)</h3>
+                    <p className="text-[11px] text-[#64748b]">Upload 4-side vehicle photos and damage close-ups</p>
                   </div>
                 </div>
 
-                {/* Status Indicator Pill */}
-                {isUploaded && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                    <span className="material-symbols-outlined text-[12px] filled-icon">
-                      check_circle
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                    JPEG, JPG, PNG
+                  </span>
+                  {hasCarUploaded ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                      {carFiles.length} photo{carFiles.length > 1 ? 's' : ''}
                     </span>
-                    Validated
-                  </span>
-                )}
-                {isError && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-800 bg-red-100 px-2.5 py-0.5 rounded-full border border-red-300">
-                    <span className="material-symbols-outlined text-[12px]">error</span>
-                    Error
-                  </span>
-                )}
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Pending
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Card Body - In-Card Feedback & Upload Area */}
-              <div className="flex-1 flex flex-col justify-center my-2">
-                {/* 1. ERROR STATE -> Displays Scrollable Error Container Inside the Card */}
-                {isError && (
-                  <div className="space-y-3">
-                    <div className="bg-white/90 border border-red-200 rounded-lg p-2.5 flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="material-symbols-outlined text-red-600 text-[18px]">
-                          broken_image
-                        </span>
-                        <p className="text-xs font-semibold text-red-950 truncate">
-                          {slot.fileName || 'Uploaded Document'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveFile(slot.id)}
-                        className="text-slate-400 hover:text-red-700 p-1 cursor-pointer"
-                        title="Remove"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">close</span>
-                      </button>
-                    </div>
+              {/* Car Photos Dropzone */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingCar(true);
+                }}
+                onDragLeave={() => setIsDraggingCar(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingCar(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    uploadCarFiles(e.dataTransfer.files);
+                  }
+                }}
+                onClick={() => carInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all duration-200 bg-white ${isDraggingCar
+                  ? 'border-amber-500 bg-amber-50/60 ring-2 ring-amber-400/20'
+                  : 'border-slate-300 hover:border-[#00355f] hover:bg-slate-50'
+                  }`}
+              >
+                <input
+                  ref={carInputRef}
+                  type="file"
+                  multiple
+                  accept=".jpeg,.jpg,.png,image/jpeg,image/png"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      uploadCarFiles(e.target.files);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="hidden"
+                />
 
-                    {/* Scrollable Error Message Container inside Card */}
-                    <div className="max-h-32 overflow-y-auto custom-scrollbar p-3 bg-red-100 border border-red-300 rounded-lg text-xs text-red-950 leading-relaxed font-medium space-y-1">
-                      <div className="flex items-center gap-1 text-red-950 font-bold text-[11px] uppercase tracking-wide">
-                        <span className="material-symbols-outlined text-[14px] text-red-700">warning</span>
-                        Validation Alert
-                      </div>
-                      <p className="whitespace-pre-wrap font-semibold text-red-950 text-[11px]">{slot.error}</p>
-                    </div>
+                <div className="flex items-center justify-center gap-2 pointer-events-none">
+                  <span className="material-symbols-outlined text-amber-600 text-[24px]">
+                    add_photo_alternate
+                  </span>
+                  <span className="text-xs font-bold text-[#0f1c2b]">
+                    Click or drag & drop multiple car photos here
+                  </span>
+                  <span className="text-[11px] text-slate-400">• JPEG, JPG, PNG</span>
+                </div>
+              </div>
 
-                    {/* In-Card Re-upload Trigger */}
-                    <label className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs active:scale-98">
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept={
-                          slot.categoryPayload === 'accident_photos'
-                            ? 'image/jpeg,image/png,image/jpg,image/webp,image/heic'
-                            : 'application/pdf,.pdf'
-                        }
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleFileUpload(slot.id, e.target.files[0]);
-                          }
-                        }}
-                      />
-                      <span className="material-symbols-outlined text-[16px]">refresh</span>
-                      Re-upload Document
-                    </label>
-                  </div>
-                )}
+              {/* Car Photos Uploaded List */}
+              {carFiles.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  {carFiles.map((fileItem) => {
+                    const isError = fileItem.status === 'error';
+                    const isValidated = fileItem.status === 'validated';
+                    const isUploading = fileItem.status === 'uploading';
 
-                {/* 2. UPLOADED / SUCCESS STATE -> Displays Green Card with In-Card Success Message */}
-                {isUploaded && (
-                  <div className="space-y-3">
-                    <div className="bg-white/95 border border-emerald-200 rounded-lg p-3 flex items-center justify-between shadow-2xs">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="material-symbols-outlined text-[#10b981] text-[22px]">
-                          task
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-[#0f1c2b] truncate">
-                            {slot.fileName}
-                          </p>
-                          <p className="text-[10px] text-[#64748b]">
-                            {slot.fileSize || '2.4 MB'} • Verified & Encrypted
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleRemoveFile(slot.id)}
-                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
-                        title="Remove file"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
-                    </div>
-
-                    {/* In-Card Success Message */}
-                    <div className="p-2.5 bg-emerald-100/70 border border-emerald-200 rounded-lg text-xs text-emerald-900 font-medium flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[#10b981] text-[16px] mt-0.5">
-                        check
-                      </span>
-                      <p className="text-[11px] leading-relaxed">
-                        {slot.successMessage ||
-                          'Document OCR and visual inspection validated successfully for underwriting.'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. UPLOADING / PROCESSING STATE */}
-                {isUploading && (
-                  <div className="bg-white/90 p-4 rounded-lg border border-[#cde5fc] space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-[#00355f]/20 border-t-[#00355f] rounded-full animate-spin"></div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-[#0f1c2b] truncate">{slot.fileName}</p>
-                        <p className="text-[10px] text-[#00355f]">
-                          Validating document with AI verification...
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="w-full bg-[#d6e4f9] rounded-full h-1.5 overflow-hidden">
+                    return (
                       <div
-                        className="bg-[#00355f] h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${slot.progress || 60}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
+                        key={fileItem.id}
+                        className={`p-2.5 rounded-lg border flex items-center justify-between gap-3 text-xs ${isError
+                          ? 'bg-red-50/80 border-red-300 text-red-950'
+                          : isValidated
+                            ? 'bg-white border-emerald-300 text-emerald-950'
+                            : 'bg-white border-slate-200'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="material-symbols-outlined text-[18px] text-amber-600 shrink-0">
+                            image
+                          </span>
+                          <span className="font-semibold truncate">{fileItem.fileName}</span>
+                          <span className="text-[10px] text-slate-500 shrink-0">
+                            {fileItem.fileSize}
+                          </span>
 
-                {/* 4. EMPTY STATE -> Drag & Drop Area */}
-                {isEmpty && (
-                  <label
-                    className="flex-1 flex flex-col items-center justify-center py-6 text-center cursor-pointer transition-colors group"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        handleFileUpload(slot.id, e.dataTransfer.files[0]);
-                      }
-                    }}
-                  >
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept={
-                        slot.categoryPayload === 'accident_photos'
-                          ? 'image/jpeg,image/png,image/jpg,image/webp,image/heic'
-                          : 'application/pdf,.pdf'
-                      }
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          handleFileUpload(slot.id, e.target.files[0]);
-                        }
-                      }}
-                    />
-                    <span className="material-symbols-outlined text-[#94a3b8] mb-2 text-[32px] group-hover:text-[#00355f] group-hover:scale-110 transition-all">
-                      cloud_upload
-                    </span>
-                    <p className="text-xs text-[#00355f] font-bold group-hover:underline">
-                      Click to upload or drag & drop
-                    </p>
-                    <p className="text-[11px] text-[#64748b] mt-1">{slot.hint}</p>
-                  </label>
-                )}
-              </div>
+                          {isValidated && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
+                              <span className="material-symbols-outlined text-[12px]">check</span>
+                              Vehicle Picture Ready
+                            </span>
+                          )}
 
-              {/* Card Footer Info */}
-              <div className="pt-2 border-t border-slate-200/60 flex justify-between items-center text-[10px] text-[#64748b]">
-                <span>
-                  {slot.categoryPayload === 'accident_photos'
-                    ? 'Accepts JPEG, JPG, PNG'
-                    : 'Accepts PDF only'}{' '}
-                  up to 10MB
-                </span>
-                {isUploaded && <span className="text-emerald-700 font-bold">Ready</span>}
-              </div>
+                          {isError && (
+                            <span className="text-[10px] font-bold text-red-700 truncate">
+                              {fileItem.error || 'Invalid file'}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => removeCarFile(fileItem.id)}
+                          className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-slate-100 cursor-pointer shrink-0"
+                          title="Remove photo"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          );
-        })}
+
+            {/* -------------------------------------------------------------
+                UPLOAD SECTION 2: SUPPORTING DOCUMENTS (Multiple PDFs)
+                ------------------------------------------------------------- */}
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#00355f] text-[20px]">
+                    picture_as_pdf
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-bold text-[#0f1c2b]">Supporting Documents (Multiple PDFs)</h3>
+                    <p className="text-[11px] text-[#64748b]">Upload insurance policy, repair invoice, estimates, etc.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
+                    PDF only
+                  </span>
+                  {hasPdfUploaded ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                      {pdfFiles.length} file{pdfFiles.length > 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Pending
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* PDF Dropzone */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingPdf(true);
+                }}
+                onDragLeave={() => setIsDraggingPdf(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingPdf(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    uploadPdfFiles(e.dataTransfer.files);
+                  }
+                }}
+                onClick={() => pdfInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all duration-200 bg-white ${isDraggingPdf
+                  ? 'border-[#00355f] bg-[#eef4ff] ring-2 ring-[#00355f]/20'
+                  : 'border-slate-300 hover:border-[#00355f] hover:bg-slate-50'
+                  }`}
+              >
+                <input
+                  ref={pdfInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,application/pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      uploadPdfFiles(e.target.files);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="hidden"
+                />
+
+                <div className="flex items-center justify-center gap-2 pointer-events-none">
+                  <span className="material-symbols-outlined text-red-600 text-[24px]">
+                    post_add
+                  </span>
+                  <span className="text-xs font-bold text-[#0f1c2b]">
+                    Click or drag & drop multiple supporting PDF files here
+                  </span>
+                  <span className="text-[11px] text-slate-400">• PDF only</span>
+                </div>
+              </div>
+
+              {/* PDF Uploaded List */}
+              {pdfFiles.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  {pdfFiles.map((fileItem) => {
+                    const isError = fileItem.status === 'error';
+                    const isValidated = fileItem.status === 'validated';
+
+                    return (
+                      <div
+                        key={fileItem.id}
+                        className={`p-2.5 rounded-lg border flex items-center justify-between gap-3 text-xs ${isError
+                          ? 'bg-red-50/80 border-red-300 text-red-950'
+                          : isValidated
+                            ? 'bg-white border-emerald-300 text-emerald-950'
+                            : 'bg-white border-slate-200'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="material-symbols-outlined text-[18px] text-red-600 shrink-0">
+                            picture_as_pdf
+                          </span>
+                          <span className="font-semibold truncate">{fileItem.fileName}</span>
+                          <span className="text-[10px] text-slate-500 shrink-0">
+                            {fileItem.fileSize}
+                          </span>
+
+                          {isValidated && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200 shrink-0">
+                              <span className="material-symbols-outlined text-[12px]">check</span>
+                              Document Ready
+                            </span>
+                          )}
+
+                          {isError && (
+                            <span className="text-[10px] font-bold text-red-700 truncate">
+                              {fileItem.error || 'Invalid file'}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => removePdfFile(fileItem.id)}
+                          className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-slate-100 cursor-pointer shrink-0"
+                          title="Remove PDF"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Sticky Bottom Action Bar with Submission API */}
+      {/* Sticky Bottom Action Bar */}
       <div className="fixed bottom-0 right-0 left-0 md:left-64 bg-white/95 backdrop-blur-md border-t border-[#e2e8f0] p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] z-40 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div className="text-xs text-[#42474f] flex items-center gap-2">
+        <div className="text-xs text-[#42474f] flex items-center gap-2 w-full sm:w-auto">
           <span
-            className={`w-2.5 h-2.5 rounded-full ${
-              allRequiredValidated ? 'bg-[#10b981] animate-pulse' : 'bg-amber-500'
-            }`}
+            className={`w-2.5 h-2.5 rounded-full shrink-0 ${bothUploaded ? 'bg-[#10b981] animate-pulse' : 'bg-amber-500'
+              }`}
           ></span>
           <span>
-            {allRequiredValidated ? (
+            {bothUploaded ? (
               <span className="font-semibold text-emerald-800">
-                All required claim documents validated. You may now submit your claim.
+                Car photos and Policy/Invoice documents loaded. Ready to submit reimbursement claim.
               </span>
             ) : (
               <span className="text-slate-600">
-                Please upload and validate all required documents ({validatedRequiredCount}/{requiredSlots.length} completed) to submit.
+                Action required: Upload{' '}
+                {!hasCarUploaded && <span className="font-bold text-amber-900">Car Photos (JPG/PNG)</span>}
+                {!hasCarUploaded && !hasPdfUploaded && ' and '}
+                {!hasPdfUploaded && (
+                  <span className="font-bold text-amber-900">Insurance Policy & Repair Invoice (PDF)</span>
+                )}{' '}
+                to submit claim.
               </span>
             )}
           </span>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <button
+          {/* <button
             onClick={saveDraftClaim}
             className="px-5 py-2.5 rounded-lg text-xs font-semibold text-[#0f1c2b] border border-[#e2e8f0] hover:bg-[#eef4ff] transition-colors bg-white cursor-pointer active:scale-98"
           >
             Save as Draft
-          </button>
+          </button> */}
 
-          {/* SUBMIT BUTTON: Disabled until all required documents uploaded, Green when ready */}
+          {/* SUBMIT BUTTON: Enabled after uploading both car photos and policy/invoice files */}
           <button
-            onClick={handleSubmitClaim}
-            disabled={!allRequiredValidated || isSubmitting}
-            className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${
-              allRequiredValidated && !isSubmitting
-                ? 'bg-[#10b981] hover:bg-[#059669] text-white cursor-pointer active:scale-98 ring-2 ring-emerald-400/50'
-                : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-70'
-            }`}
+            onClick={() => submitClaim()}
+            disabled={!canSubmit}
+            className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${canSubmit
+              ? 'bg-[#10b981] hover:bg-[#059669] text-white cursor-pointer active:scale-98 ring-2 ring-emerald-400/50'
+              : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-70'
+              }`}
           >
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Submitting Claim to API...
+                Submitting & Classifying Claim...
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined text-[18px]">
-                  {allRequiredValidated ? 'send' : 'lock'}
+                  {canSubmit ? 'send' : 'lock'}
                 </span>
                 Submit Reimbursement Claim
               </>
@@ -393,3 +556,4 @@ export const ClaimerUploadView: React.FC = () => {
     </div>
   );
 };
+

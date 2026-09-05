@@ -39,18 +39,18 @@ export const LoginScreen: React.FC = () => {
         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00355f] to-[#4a6173] flex items-center justify-center shadow-lg border border-white/20">
           <span className="material-symbols-outlined text-white text-[24px]">verified_user</span>
         </div>
-        <div className="text-left">
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-            ClaimShield <span className="text-sky-400 font-semibold">Pro</span>
+        <div className="text-center">
+          <h1 className="text-xl font-bold tracking-tight text-white flex items-centergap-1.5">
+            ClaimIQ
           </h1>
-          <p className="text-[11px] text-slate-300">Motor Claims Intelligence</p>
+          <p className="text-[11px] text-slate-300">Motor Claims Validation</p>
         </div>
       </header>
 
       {/* Main Centered Login Box */}
       <main className="w-full max-w-md mx-auto my-auto py-6">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/10 text-[#0f1c2b] p-6 sm:p-8">
-          
+
           {/* Header */}
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold text-[#0f1c2b] tracking-tight">Portal Login</h2>
@@ -67,11 +67,10 @@ export const LoginScreen: React.FC = () => {
                 setSelectedRole('claimer');
                 setEmail('');
               }}
-              className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                selectedRole === 'claimer'
-                  ? 'bg-white text-[#00355f] shadow-xs'
-                  : 'text-[#64748b] hover:text-[#0f1c2b]'
-              }`}
+              className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${selectedRole === 'claimer'
+                ? 'bg-white text-[#00355f] shadow-xs'
+                : 'text-[#64748b] hover:text-[#0f1c2b]'
+                }`}
             >
               <span className="material-symbols-outlined text-[18px]">person</span>
               Policyholder
@@ -82,11 +81,10 @@ export const LoginScreen: React.FC = () => {
                 setSelectedRole('validator');
                 setEmail('');
               }}
-              className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                selectedRole === 'validator'
-                  ? 'bg-white text-[#00355f] shadow-xs'
-                  : 'text-[#64748b] hover:text-[#0f1c2b]'
-              }`}
+              className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${selectedRole === 'validator'
+                ? 'bg-white text-[#00355f] shadow-xs'
+                : 'text-[#64748b] hover:text-[#0f1c2b]'
+                }`}
             >
               <span className="material-symbols-outlined text-[18px]">fact_check</span>
               Validator
@@ -207,7 +205,7 @@ export const LoginScreen: React.FC = () => {
 
       {/* Minimal Footer */}
       <footer className="text-center text-[11px] text-slate-400 py-3">
-        ClaimShield Pro Enterprise Motor Claims
+        ClaimIQ Motor Claims Validation
       </footer>
     </div>
   );
