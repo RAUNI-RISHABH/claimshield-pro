@@ -66,3 +66,41 @@ export interface ClaimRecord {
   expectedPayoutDate?: string;
   documents: DocumentItem[];
 }
+
+export interface StoredFileInfo {
+  filename: string;
+  size_bytes: number;
+  content_type: string;
+  category: 'vehicle_pics' | 'other_evidence' | string;
+  blob_path: string;
+  blob_url: string;
+  sha256?: string;
+}
+
+export interface StorageDetails {
+  backend: string;
+  container: string;
+  base_folder: string;
+  vehicle_pics_folder: string;
+  other_evidence_folder: string;
+}
+
+export interface ClaimDetails {
+  claim_id: string;
+  user_name?: string;
+  folder_name: string;
+  time_created: string;
+  iso_timestamp: string;
+  status: string;
+  description: string;
+  total_files_uploaded: number;
+  vehicle_pics_count: number;
+  other_evidence_count: number;
+  storage_details: StorageDetails;
+  vehicle_pics: StoredFileInfo[];
+  other_evidence: StoredFileInfo[];
+  saved_metadata_path?: string;
+}
+
+export type GetAllClaimsResponse = ClaimDetails[];
+

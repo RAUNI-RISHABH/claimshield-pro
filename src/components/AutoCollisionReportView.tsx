@@ -29,7 +29,7 @@ export const AutoCollisionReportView: React.FC = () => {
   const setResolutionDrawerOpen = useClaimStore((state) => state.setResolutionDrawerOpen);
   const setSelectedTrackingClaimId = useClaimStore((state) => state.setSelectedTrackingClaimId);
 
-  const claim: ClaimRecord =
+  const claim: ClaimRecord | undefined =
     claims.find((c) => c.id === selectedClaimForReviewId) || claims[0];
 
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -40,8 +40,28 @@ export const AutoCollisionReportView: React.FC = () => {
     isOpen: false,
     actionType: null,
     notes: '',
-    deductible: claim.deductible.toFixed(2),
+    deductible: (claim?.deductible || 0).toFixed(2),
   });
+
+  if (!claim) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-16 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-[#eef4ff] text-[#00355f] flex items-center justify-center mb-4">
+          <span className="material-symbols-outlined text-[32px]">folder_open</span>
+        </div>
+        <h3 className="text-base font-bold text-[#0f1c2b]">No Claim Selected for Review</h3>
+        <p className="text-xs text-[#64748b] mt-1.5 max-w-sm">
+          Please select a claim from the Validator Claims Queue to view assessment details and photos.
+        </p>
+        <button
+          onClick={() => setActiveNav('queue')}
+          className="mt-6 px-5 py-2.5 bg-[#00355f] hover:bg-[#0f4c81] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+        >
+          Go to Claims Queue
+        </button>
+      </div>
+    );
+  }
 
   const isSucceeded = claim.status === 'approved' || claim.status === 'succeeded';
   const isRejected = claim.status === 'rejected';

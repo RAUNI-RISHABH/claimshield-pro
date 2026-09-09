@@ -5,6 +5,8 @@ import { fetchValidatorQueue } from '../api/validatorApi';
 
 export const ValidatorQueueView: React.FC = () => {
   const claims = useClaimStore((state) => state.claims);
+  const isLoadingClaims = useClaimStore((state) => state.isLoadingClaims);
+  const fetchClaims = useClaimStore((state) => state.fetchClaims);
   const searchQuery = useClaimStore((state) => state.searchQuery);
   const setSelectedClaimForReviewId = useClaimStore((state) => state.setSelectedClaimForReviewId);
   const setActiveNav = useClaimStore((state) => state.setActiveNav);
@@ -14,9 +16,13 @@ export const ValidatorQueueView: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  React.useEffect(() => {
+    fetchClaims();
+  }, [fetchClaims]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchValidatorQueue({ statusFilter: filterType, searchQuery });
+    await fetchClaims();
     setIsRefreshing(false);
   };
 
@@ -193,12 +199,26 @@ export const ValidatorQueueView: React.FC = () => {
               })}
             </tbody>
           </table>
+
+          {filteredClaims.length === 0 && (
+            <div className="py-16 text-center">
+              <span className="material-symbols-outlined text-[40px] text-slate-400 mb-2">inbox</span>
+              <p className="text-sm font-bold text-[#0f1c2b]">
+                {isLoadingClaims ? 'Loading claims from database...' : 'No claims found in storage'}
+              </p>
+              <p className="text-xs text-[#64748b] mt-1">
+                {isLoadingClaims
+                  ? 'Connecting to backend PostgreSQL API...'
+                  : 'There are no claims matching the current filter or search criteria.'}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Table Pagination as shown in Screenshot 5 */}
+        {/* Table Pagination */}
         <div className="px-4 py-3 border-t border-[#e2e8f0] bg-white flex flex-col sm:flex-row justify-between items-center gap-3">
           <span className="text-xs text-[#64748b]">
-            Showing 1 to {filteredClaims.length} of 124 entries
+            Showing {filteredClaims.length} of {claims.length} total claim{claims.length !== 1 ? 's' : ''}
           </span>
           <div className="flex items-center gap-1 text-xs">
             <button

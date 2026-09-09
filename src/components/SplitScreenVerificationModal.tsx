@@ -24,7 +24,7 @@ export const SplitScreenVerificationModal: React.FC = () => {
     'Documents verified against policy POL-2023-A491. Frontal collision damages verified with certified repair estimate. Standard policy deductible applied.'
   );
 
-  if (!isOpen) return null;
+  if (!isOpen || !claim) return null;
 
   const docOptions = [
     {

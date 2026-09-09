@@ -1,5 +1,5 @@
 import { ClaimRecord, DocumentItem } from '../types';
-import { INITIAL_CLAIMS } from '../data';
+import { fetchAllClaimsApi } from './claimerApi';
 
 export interface ValidatorQueueParams {
   statusFilter?: 'all' | 'pending' | 'succeeded' | 'rejected';
@@ -45,9 +45,8 @@ export interface AiVerificationResponse {
 export async function fetchValidatorQueue(
   params?: ValidatorQueueParams
 ): Promise<{ claims: ClaimRecord[]; totalCount: number }> {
-  await new Promise((resolve) => setTimeout(resolve, 350));
-
-  let filtered = [...INITIAL_CLAIMS];
+  const res = await fetchAllClaimsApi();
+  let filtered = res.claims;
 
   if (params?.statusFilter && params.statusFilter !== 'all') {
     if (params.statusFilter === 'pending') {
@@ -79,8 +78,8 @@ export async function fetchValidatorQueue(
  * Validator API: Fetch single claim report details for Auto Collision review.
  */
 export async function fetchCollisionReport(claimId: string): Promise<ClaimRecord | null> {
-  await new Promise((resolve) => setTimeout(resolve, 250));
-  const found = INITIAL_CLAIMS.find((c) => c.id === claimId);
+  const res = await fetchAllClaimsApi();
+  const found = res.claims.find((c) => c.id === claimId);
   return found || null;
 }
 

@@ -26,7 +26,6 @@ export const ResolutionDrawer: React.FC<ResolutionDrawerProps> = ({
   const claim =
     propClaim ||
     claims.find((c) => c.id === selectedTrackingClaimId) ||
-    claims.find((c) => c.id === '#CLM-2024-089') ||
     claims[0];
 
   const handleClose = () => {

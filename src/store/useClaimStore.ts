@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { UserRole, ClaimRecord, DocumentItem, UserProfile } from '../types';
 import { INITIAL_CLAIMS, INITIAL_UPLOAD_SLOTS, HOTLINKED_ASSETS } from '../data';
-import { uploadAndValidateDocument, classifyAutoDocument, submitClaimApi, saveDraftClaimApi, submitClaimClassificationApi, uploadClaimDocumentsToStorageApi } from '../api/claimerApi';
+import { uploadAndValidateDocument, classifyAutoDocument, submitClaimApi, saveDraftClaimApi, submitClaimClassificationApi, uploadClaimDocumentsToStorageApi, fetchAllClaimsApi } from '../api/claimerApi';
 
 export interface BatchUploadedFile {
   id: string;
@@ -78,8 +78,11 @@ interface ClaimStoreState {
 
   // Claims
   claims: ClaimRecord[];
+  isLoadingClaims: boolean;
+  claimsError: string | null;
   selectedClaimForReviewId: string;
   selectedClaimForReportId: string | null;
+  fetchClaims: () => Promise<void>;
 
   // Upload slots for Claimer (Legacy single-slot)
   uploadSlots: UploadSlot[];
@@ -164,10 +167,12 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
   isMobileSidebarOpen: false,
   searchQuery: '',
 
-  claims: INITIAL_CLAIMS,
-  selectedClaimForReviewId: INITIAL_CLAIMS[0].id,
+  claims: [],
+  isLoadingClaims: false,
+  claimsError: null,
+  selectedClaimForReviewId: '',
   selectedClaimForReportId: null,
-  selectedTrackingClaimId: '#CLM-2024-089',
+  selectedTrackingClaimId: '',
 
   uploadSlots: INITIAL_UPLOAD_SLOTS as UploadSlot[],
   batchFiles: [],
@@ -183,32 +188,7 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
   isNotificationsOpen: false,
   isResolutionDrawerOpen: false,
 
-  notifications: [
-    {
-      id: 'n1',
-      title: 'Claim #CLM-2024-089 Approved',
-      desc: 'Your auto collision reimbursement claim for ₹1,050.00 has been approved.',
-      time: '10 minutes ago',
-      read: false,
-      type: 'success',
-    },
-    {
-      id: 'n2',
-      title: 'Action Required: Re-upload Car Photos',
-      desc: 'Car photo for Claim #CLM-9821 was flagged by AI reviewer as too dark. Please provide a clear copy.',
-      time: '1 hour ago',
-      read: false,
-      type: 'warning',
-    },
-    {
-      id: 'n3',
-      title: 'Policy Renewal Confirmation',
-      desc: 'Your policy POL-882 is active through December 2026.',
-      time: '2 days ago',
-      read: true,
-      type: 'info',
-    },
-  ],
+  notifications: [],
 
   // Auth actions
   login: (role: UserRole, customUser) => {
@@ -720,14 +700,20 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
             size: s.fileSize || '2.0 MB',
           }));
 
+    const createdClaimId =
+      storageResult.data?.claim_id ||
+      storageResult.data?.claimId ||
+      `CLM-${Date.now().toString(36).toUpperCase()}`;
+
+    const currentUser = get().currentUser;
     const response = await submitClaimApi({
-      claimId: storageResult.data?.claim_id || storageResult.data?.claimId || '#CLM-9821',
-      claimerName: 'Jane Doe',
-      carPolicy: 'POL-882',
-      vehicle: '2020 Toyota Camry',
-      incidentDate: 'Oct 24, 2024, 11:30 AM',
-      incidentLocation: 'Pine & 6th Ave, Seattle, WA',
-      repairEstimate: 1450.0,
+      claimId: createdClaimId,
+      claimerName: currentUser?.name || 'Policyholder',
+      carPolicy: currentUser?.policyNumber || '',
+      vehicle: '',
+      incidentDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      incidentLocation: '',
+      repairEstimate: 0,
       documents: documentsToSubmit,
     });
 
@@ -736,12 +722,18 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
         storageResult.data?.message ||
         `Claim ${response.claim.id} documents uploaded to storage successfully! Redirecting to tracking...`;
 
+      // Clear uploads
+      get().clearAllUploads();
+
       set((state) => ({
-        claims: [response.claim, ...state.claims],
+        claims: [response.claim, ...state.claims.filter((c) => c.id !== response.claim.id)],
         selectedTrackingClaimId: response.claim.id,
         isSubmittingClaim: false,
         submitMessage: successMessage,
       }));
+
+      // Refresh claims from PostgreSQL backend storage
+      get().fetchClaims();
 
       setTimeout(() => {
         set({ submitMessage: null, activeNav: 'history' });
@@ -751,6 +743,25 @@ export const useClaimStore = create<ClaimStoreState>((set, get) => ({
       set({
         isSubmittingClaim: false,
         submitError: response.message || 'Failed to complete claim submission.',
+      });
+    }
+  },
+
+  fetchClaims: async () => {
+    set({ isLoadingClaims: true, claimsError: null });
+    const res = await fetchAllClaimsApi();
+    if (res.success) {
+      set((state) => ({
+        claims: res.claims,
+        isLoadingClaims: false,
+        claimsError: null,
+        selectedTrackingClaimId: state.selectedTrackingClaimId || res.claims[0]?.id || '',
+        selectedClaimForReviewId: state.selectedClaimForReviewId || res.claims[0]?.id || '',
+      }));
+    } else {
+      set({
+        isLoadingClaims: false,
+        claimsError: res.error || 'Failed to fetch claims from server',
       });
     }
   },

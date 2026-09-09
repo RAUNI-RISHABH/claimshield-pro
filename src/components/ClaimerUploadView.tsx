@@ -60,25 +60,8 @@ export const ClaimerUploadView: React.FC = () => {
               Motor Claim Document Upload
             </h1>
             <p className="text-xs text-[#64748b] mt-1">
-              Active Claim Submission ID: <span className="font-bold font-mono text-[#00355f]">#CLM-9821</span> • Motor Policy <span className="font-semibold font-mono text-slate-800">POL-882</span> • Vehicle: <span className="font-medium text-slate-700">2020 Toyota Camry</span>
+              Upload required vehicle accident photographs and supporting documents for claim verification.
             </p>
-          </div>
-
-          {/* Submission Readiness Badge */}
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-xs px-3.5 py-1.5 rounded-lg border font-semibold flex items-center gap-2 transition-all shadow-2xs ${bothUploaded
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-300/40'
-                : 'bg-amber-50 text-amber-900 border-amber-200'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                {bothUploaded ? 'verified' : 'pending_actions'}
-              </span>
-              {bothUploaded
-                ? 'Both Uploads Ready for Submission'
-                : `Uploads: ${hasCarUploaded ? 1 : 0} of 2 Completed`}
-            </span>
           </div>
         </div>
       </div>
@@ -173,7 +156,7 @@ export const ClaimerUploadView: React.FC = () => {
                     <h3 className="text-xs font-bold text-[#0f1c2b]">Insurance Policy</h3>
                   </div>
                   <p className="text-[11px] text-[#64748b] mt-1.5 leading-relaxed">
-                    Active motor insurance policy certificate and schedule document matching policy number POL-882.
+                    Active motor insurance policy certificate and schedule document.
                   </p>
                 </div>
               </div>
@@ -497,27 +480,7 @@ export const ClaimerUploadView: React.FC = () => {
       {/* Sticky Bottom Action Bar */}
       <div className="fixed bottom-0 right-0 left-0 md:left-64 bg-white/95 backdrop-blur-md border-t border-[#e2e8f0] p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] z-40 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div className="text-xs text-[#42474f] flex items-center gap-2 w-full sm:w-auto">
-          <span
-            className={`w-2.5 h-2.5 rounded-full shrink-0 ${bothUploaded ? 'bg-[#10b981] animate-pulse' : 'bg-amber-500'
-              }`}
-          ></span>
-          <span>
-            {bothUploaded ? (
-              <span className="font-semibold text-emerald-800">
-                Car photos and Policy/Invoice documents loaded. Ready to submit reimbursement claim.
-              </span>
-            ) : (
-              <span className="text-slate-600">
-                Action required: Upload{' '}
-                {!hasCarUploaded && <span className="font-bold text-amber-900">Car Photos (JPG/PNG)</span>}
-                {!hasCarUploaded && !hasPdfUploaded && ' and '}
-                {!hasPdfUploaded && (
-                  <span className="font-bold text-amber-900">Insurance Policy & Repair Invoice (PDF)</span>
-                )}{' '}
-                to submit claim.
-              </span>
-            )}
-          </span>
+
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">

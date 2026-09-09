@@ -1,4 +1,4 @@
-import { ClaimRecord, DocumentItem } from '../types';
+import { ClaimRecord, DocumentItem, ClaimDetails, GetAllClaimsResponse } from '../types';
 import { INITIAL_CLAIMS } from '../data';
 
 export interface FileAssessment {
@@ -787,42 +787,40 @@ export async function submitClaimApi(
   await new Promise((resolve) => setTimeout(resolve, 900));
 
   const newClaim: ClaimRecord = {
-    id: payload.claimId || `#CLM-${Math.floor(1000 + Math.random() * 9000)}`,
-    claimerName: payload.claimerName || 'Jane Doe',
-    carPolicy: payload.carPolicy || 'POL-882',
+    id: payload.claimId,
+    claimerName: payload.claimerName || 'Policyholder',
+    carPolicy: payload.carPolicy || '',
     submissionDate: new Date().toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     }),
-    incidentDate: payload.incidentDate || 'Oct 24, 2024, 11:30 AM',
-    incidentLocation: payload.incidentLocation || 'Pine & 6th Ave, Seattle, WA',
-    vehicle: payload.vehicle || '2020 Toyota Camry',
-    vin: '4T1B11HK2LU889YYY',
-    repairEstimate: payload.repairEstimate || 1450.0,
-    deductible: 200.0,
-    potentialPayout: Math.max(0, (payload.repairEstimate || 1450.0) - 200.0),
+    incidentDate: payload.incidentDate || '',
+    incidentLocation: payload.incidentLocation || '',
+    vehicle: payload.vehicle || '',
+    repairEstimate: payload.repairEstimate || 0,
+    deductible: 0,
+    potentialPayout: 0,
     docsUploaded: payload.documents.length,
-    docsTotal: 8,
+    docsTotal: payload.documents.length,
     status: 'pending',
-    statusLabel: 'Pending',
-    diagnosisCode: 'J01.90 (Bumper / Hood Dent)',
+    statusLabel: 'Pending Verification',
     aiSummary: {
-      damageAssessment: 'Front Bumper Scrape & Dent',
-      damageVerified: true,
-      policyMatching: 'Comprehensive Auto Shield',
+      damageAssessment: 'Submitted for verification',
+      damageVerified: false,
+      policyMatching: 'Pending',
       policyActive: true,
-      fraudScore: 8,
-      fraudLabel: 'Low Risk (8/100)',
+      fraudScore: 0,
+      fraudLabel: 'Unassessed',
     },
     financialBreakdown: {
-      originalEstimate: payload.repairEstimate || 1450.0,
-      deductible: 200.0,
-      consumables: 0.0,
-      approvedAmount: Math.max(0, (payload.repairEstimate || 1450.0) - 200.0),
+      originalEstimate: payload.repairEstimate || 0,
+      deductible: 0,
+      consumables: 0,
+      approvedAmount: 0,
     },
-    validatorRemarks: 'Awaiting primary adjuster sign-off.',
-    expectedPayoutDate: 'Pending Review',
+    validatorRemarks: 'Documents uploaded to cloud storage repository.',
+    expectedPayoutDate: '',
     documents: payload.documents.map((d, idx) => ({
       id: `doc-${idx + 1}`,
       title: d.fileName,
@@ -844,12 +842,169 @@ export async function submitClaimApi(
   };
 }
 
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(isoOrTime?: string): string {
+  if (!isoOrTime) return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  try {
+    const d = new Date(isoOrTime);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  } catch {}
+  return isoOrTime;
+}
+
+export function mapClaimDetailsToClaimRecord(detail: ClaimDetails): ClaimRecord {
+  const statusLower = (detail.status || 'pending').toLowerCase();
+  let mappedStatus: 'pending' | 'approved' | 'rejected' | 'succeeded' = 'pending';
+  if (statusLower.includes('approve') || statusLower.includes('succeed')) {
+    mappedStatus = 'approved';
+  } else if (statusLower.includes('reject')) {
+    mappedStatus = 'rejected';
+  } else {
+    mappedStatus = 'pending';
+  }
+
+  const documents: DocumentItem[] = [];
+
+  // 1. Vehicle pics
+  (detail.vehicle_pics || []).forEach((pic, idx) => {
+    documents.push({
+      id: `${detail.claim_id}-vpic-${idx + 1}`,
+      title: pic.filename,
+      fileName: pic.filename,
+      category: 'Car Photos',
+      fileSize: formatBytes(pic.size_bytes),
+      size: formatBytes(pic.size_bytes),
+      required: true,
+      status: 'verified_agent',
+      imageUrl: pic.blob_url,
+      iconName: 'photo_camera',
+    });
+  });
+
+  // 2. Supporting documents (PDFs)
+  (detail.other_evidence || []).forEach((doc, idx) => {
+    const fnLower = doc.filename.toLowerCase();
+    const categoryName = fnLower.includes('policy')
+      ? 'Insurance Policy'
+      : fnLower.includes('invoice') || fnLower.includes('estimate') || fnLower.includes('bill')
+      ? 'Repair Invoice'
+      : fnLower.includes('rc') || fnLower.includes('registration')
+      ? 'Registration Certificate'
+      : 'Supporting Document';
+
+    documents.push({
+      id: `${detail.claim_id}-doc-${idx + 1}`,
+      title: doc.filename,
+      fileName: doc.filename,
+      category: categoryName,
+      fileSize: formatBytes(doc.size_bytes),
+      size: formatBytes(doc.size_bytes),
+      required: true,
+      status: 'verified_agent',
+      imageUrl: doc.blob_url,
+      iconName: 'description',
+    });
+  });
+
+  return {
+    id: detail.claim_id,
+    claimerName: detail.user_name || 'Policyholder',
+    carPolicy: '',
+    submissionDate: formatDate(detail.iso_timestamp || detail.time_created),
+    incidentDate: detail.time_created || '',
+    incidentLocation: '',
+    vehicle: '',
+    repairEstimate: 0,
+    deductible: 0,
+    potentialPayout: 0,
+    docsUploaded: detail.total_files_uploaded || documents.length,
+    docsTotal: detail.total_files_uploaded || documents.length,
+    status: mappedStatus,
+    statusLabel: detail.status ? detail.status.replace(/_/g, ' ') : 'Pending Verification',
+    aiSummary: {
+      damageAssessment: detail.description || 'Pending Assessment',
+      damageVerified: false,
+      policyMatching: 'Under Review',
+      policyActive: true,
+      fraudScore: 0,
+      fraudLabel: 'Unassessed',
+    },
+    financialBreakdown: {
+      originalEstimate: 0,
+      deductible: 0,
+      consumables: 0,
+      approvedAmount: 0,
+    },
+    validatorRemarks: detail.description || '',
+    expectedPayoutDate: '',
+    documents,
+  };
+}
+
+export const ALL_CLAIMS_API_URL = 'http://127.0.0.1:8000/api/v1/claims/all';
+
+/**
+ * Claimer API: Fetch all claims from PostgreSQL backend storage.
+ */
+export async function fetchAllClaimsApi(): Promise<{
+  success: boolean;
+  claims: ClaimRecord[];
+  rawData?: GetAllClaimsResponse;
+  error?: string;
+}> {
+  try {
+    const response = await fetch(ALL_CLAIMS_API_URL, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        claims: [],
+        error: `HTTP ${response.status}: ${errorText || response.statusText}`,
+      };
+    }
+
+    const data: GetAllClaimsResponse = await response.json();
+    const mappedClaims = Array.isArray(data) ? data.map(mapClaimDetailsToClaimRecord) : [];
+
+    return {
+      success: true,
+      claims: mappedClaims,
+      rawData: data,
+    };
+  } catch (err: any) {
+    console.error('[fetchAllClaimsApi] Network error:', err);
+    return {
+      success: false,
+      claims: [],
+      error: err.message || 'Failed to connect to backend at http://127.0.0.1:8000/api/v1/claims/all',
+    };
+  }
+}
+
 /**
  * Claimer API: Fetch listing of policyholder's claims.
  */
-export async function fetchClaimerClaims(userId: string): Promise<ClaimRecord[]> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return INITIAL_CLAIMS;
+export async function fetchClaimerClaims(userId?: string): Promise<ClaimRecord[]> {
+  const result = await fetchAllClaimsApi();
+  if (result.success) {
+    return result.claims;
+  }
+  return [];
 }
 
 /**

@@ -8,7 +8,7 @@ export const DownloadReportModal: React.FC = () => {
   const selectedClaimForReportId = useClaimStore((state) => state.selectedClaimForReportId);
   const selectedTrackingClaimId = useClaimStore((state) => state.selectedTrackingClaimId);
 
-  const claimId = selectedClaimForReportId || selectedTrackingClaimId || '#CLM-2024-089';
+  const claimId = selectedClaimForReportId || selectedTrackingClaimId;
   const claim = claims.find((c) => c.id === claimId) || claims[0];
 
   if (!isOpen || !claim) return null;

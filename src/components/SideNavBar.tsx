@@ -43,15 +43,13 @@ export const SideNavBar: React.FC = () => {
       )}
 
       <aside
-        className={`fixed left-0 top-16 bottom-0 z-40 bg-[#1e293b] text-[#cbd5e1] flex flex-col border-r border-[#334155] select-none transition-all duration-300 ease-in-out md:translate-x-0 ${
-          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${isCollapsed ? 'w-20' : 'w-64'}`}
+        className={`fixed left-0 top-16 bottom-0 z-40 bg-[#1e293b] text-[#cbd5e1] flex flex-col border-r border-[#334155] select-none transition-all duration-300 ease-in-out md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } ${isCollapsed ? 'w-20' : 'w-64'}`}
       >
         {/* Header & Toggle Section */}
         <div
-          className={`p-4 border-b border-white/10 flex items-center ${
-            isCollapsed ? 'justify-center' : 'justify-between'
-          }`}
+          className={`p-4 border-b border-white/10 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'
+            }`}
         >
           {!isCollapsed && (
             <div className="flex items-center gap-2.5 overflow-hidden">
@@ -74,9 +72,8 @@ export const SideNavBar: React.FC = () => {
           {/* Desktop Toggle Button */}
           <button
             onClick={toggleSidebarCollapsed}
-            className={`hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer ${
-              isCollapsed ? 'w-10 h-10 items-center justify-center' : ''
-            }`}
+            className={`hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer ${isCollapsed ? 'w-10 h-10 items-center justify-center' : ''
+              }`}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -91,11 +88,10 @@ export const SideNavBar: React.FC = () => {
           {role === 'validator' ? (
             <button
               onClick={handleProcessNewClaim}
-              className={`bg-[#00355f] hover:bg-[#0f4c81] text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-95 ${
-                isCollapsed
+              className={`bg-[#00355f] hover:bg-[#0f4c81] text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-95 ${isCollapsed
                   ? 'w-11 h-11 p-0'
                   : 'w-full py-2.5 px-3 text-xs uppercase tracking-wider'
-              }`}
+                }`}
               title="Process New Claim"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
@@ -104,11 +100,10 @@ export const SideNavBar: React.FC = () => {
           ) : (
             <button
               onClick={handleNewUpload}
-              className={`bg-[#00355f] hover:bg-[#0f4c81] text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-95 ${
-                isCollapsed
+              className={`bg-[#00355f] hover:bg-[#0f4c81] text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-95 ${isCollapsed
                   ? 'w-11 h-11 p-0'
                   : 'w-full py-2.5 px-3 text-xs uppercase tracking-wider'
-              }`}
+                }`}
               title="Submit New Claim"
             >
               <span className="material-symbols-outlined text-[18px]">upload_file</span>
@@ -125,17 +120,15 @@ export const SideNavBar: React.FC = () => {
               {/* Upload */}
               <button
                 onClick={() => handleNavigate('upload')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'upload'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${activeNav === 'upload'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Multi-Document Upload"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'upload' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'upload' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   upload_file
                 </span>
@@ -145,64 +138,33 @@ export const SideNavBar: React.FC = () => {
               {/* Status & History */}
               <button
                 onClick={() => handleNavigate('history')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'history'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${activeNav === 'history'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Claim Status & Tracker"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'history' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'history' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   history_toggle_off
                 </span>
                 {!isCollapsed && <span className="truncate">Claim Tracker</span>}
               </button>
 
-              {/* Policy Enquiry Chat (RAG AI) */}
-              <button
-                onClick={() => handleNavigate('enquiry')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'enquiry'
-                    ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
-                title="Policy Enquiry Chat (RAG AI)"
-              >
-                <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'enquiry' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
-                >
-                  smart_toy
-                </span>
-                {!isCollapsed && (
-                  <div className="flex items-center justify-between flex-1 min-w-0">
-                    <span className="truncate">Enquiry Chat</span>
-                    <span className="ml-1 text-[9px] font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30 px-1.5 py-0.5 rounded uppercase">
-                      AI
-                    </span>
-                  </div>
-                )}
-              </button>
-
               {/* Notifications */}
               <button
                 onClick={() => handleNavigate('notifications')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer relative ${
-                  activeNav === 'notifications'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer relative ${activeNav === 'notifications'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Claimer Notifications"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'notifications' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'notifications' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   notifications
                 </span>
@@ -211,26 +173,6 @@ export const SideNavBar: React.FC = () => {
                   <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-sky-400 ring-2 ring-[#1e293b]"></span>
                 )}
               </button>
-
-              {/* Support */}
-              <button
-                onClick={() => handleNavigate('support')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'support'
-                    ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
-                title="Help & Support Desk"
-              >
-                <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'support' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
-                >
-                  help
-                </span>
-                {!isCollapsed && <span className="truncate">Support Center</span>}
-              </button>
             </>
           ) : (
             /* VALIDATOR NAV ITEMS */
@@ -238,17 +180,15 @@ export const SideNavBar: React.FC = () => {
               {/* Queue */}
               <button
                 onClick={() => handleNavigate('queue')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'queue'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${activeNav === 'queue'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Claims Queue"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'queue' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'queue' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   assignment
                 </span>
@@ -258,17 +198,15 @@ export const SideNavBar: React.FC = () => {
               {/* Verification Center */}
               <button
                 onClick={() => handleNavigate('report')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'report'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${activeNav === 'report'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Verification Center"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'report' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'report' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   fact_check
                 </span>
@@ -278,17 +216,15 @@ export const SideNavBar: React.FC = () => {
               {/* Reports & Analytics */}
               <button
                 onClick={() => handleNavigate('analytics')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'analytics'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${activeNav === 'analytics'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Reports & Audit Logs"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'analytics' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'analytics' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   analytics
                 </span>
@@ -298,17 +234,15 @@ export const SideNavBar: React.FC = () => {
               {/* Settings */}
               <button
                 onClick={() => handleNavigate('settings')}
-                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${
-                  activeNav === 'settings'
+                className={`w-full flex items-center rounded-xl transition-all cursor-pointer ${activeNav === 'settings'
                     ? 'bg-[#cde5fc] text-[#0f1c2b] font-bold shadow-xs'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 font-medium'
-                } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
+                  } ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3.5 py-2.5 text-xs text-left'}`}
                 title="Validator Settings"
               >
                 <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    activeNav === 'settings' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
-                  }`}
+                  className={`material-symbols-outlined text-[20px] ${activeNav === 'settings' ? 'text-[#00355f] filled-icon' : 'text-slate-400'
+                    }`}
                 >
                   settings
                 </span>

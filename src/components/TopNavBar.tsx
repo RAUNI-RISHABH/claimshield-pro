@@ -18,11 +18,9 @@ export const TopNavBar: React.FC = () => {
         ? 'Multi-Document Upload'
         : activeNav === 'history'
           ? 'Claim Status & Tracker'
-          : activeNav === 'enquiry'
-            ? 'Policy Enquiry Assistant'
-            : activeNav === 'notifications'
-              ? 'Alerts & Updates'
-              : 'Support Center'
+          : activeNav === 'notifications'
+            ? 'Alerts & Updates'
+            : 'Support Center'
       : activeNav === 'queue'
         ? 'Claims Queue'
         : activeNav === 'report'
@@ -60,28 +58,6 @@ export const TopNavBar: React.FC = () => {
       </div>
 
       {/* Middle search for Claims & Policies */}
-      <div className="hidden md:flex items-center text-[#727780] bg-[#f8f9ff] px-3.5 py-1.5 rounded-lg border border-[#e2e8f0] w-72 lg:w-96 focus-within:border-[#00355f] focus-within:bg-white transition-all shadow-2xs">
-        <span className="material-symbols-outlined text-[18px] mr-2 text-[#727780]">search</span>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={
-            role === 'claimer'
-              ? 'Search my claims or documents...'
-              : 'Search queue by ID, claimant, or VIN...'
-          }
-          className="border-none bg-transparent focus:outline-none text-xs w-full placeholder:text-[#a0a5ad] text-[#0f1c2b]"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[14px]">close</span>
-          </button>
-        )}
-      </div>
 
       {/* Right Controls (Notifications & User Pill) */}
       <div className="flex items-center gap-3 text-[#4a6173]">
